@@ -1,4 +1,5 @@
 ---
+name: gtm-plan
 description: "Create a media plan for paid campaigns"
 argument-hint: "$budget/day objective (e.g. $20/day signups)"
 ---

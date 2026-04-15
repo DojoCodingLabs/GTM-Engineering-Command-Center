@@ -1,4 +1,5 @@
 ---
+name: gtm-deploy
 description: "Deploy campaign to Meta Ads"
 argument-hint: "campaign-name"
 ---

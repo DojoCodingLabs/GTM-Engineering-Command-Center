@@ -1,4 +1,5 @@
 ---
+name: gtm-report
 description: "Generate weekly GTM performance report"
 argument-hint: ""
 ---

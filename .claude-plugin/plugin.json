@@ -5,5 +5,18 @@
   "author": {
     "name": "Dojo Coding Labs",
     "email": "team@dojocoding.io"
-  }
+  },
+  "homepage": "https://github.com/DojoCodingLabs/GTM-Engineering-Command-Center",
+  "repository": "https://github.com/DojoCodingLabs/GTM-Engineering-Command-Center",
+  "license": "MIT",
+  "keywords": [
+    "gtm",
+    "growth",
+    "meta-ads",
+    "posthog",
+    "analytics",
+    "campaign-automation",
+    "claude-code",
+    "claude-code-plugin"
+  ]
 }

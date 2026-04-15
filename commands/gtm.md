@@ -1,4 +1,5 @@
 ---
+name: gtm
 description: "Run the full GTM loop: plan → create → deploy → measure → learn"
 argument-hint: "$budget/day objective (e.g. $20/day signups)"
 ---

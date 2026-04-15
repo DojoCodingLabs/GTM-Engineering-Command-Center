@@ -1,4 +1,5 @@
 ---
+name: gtm-scrape
 description: "Scrape Reddit, X, GitHub for GTM strategies and hacks"
 argument-hint: ""
 ---

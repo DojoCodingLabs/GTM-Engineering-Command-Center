@@ -1,4 +1,5 @@
 ---
+name: gtm-setup
 description: "Set up GTM Command Center for this project"
 argument-hint: ""
 ---

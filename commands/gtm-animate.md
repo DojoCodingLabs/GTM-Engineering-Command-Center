@@ -1,4 +1,5 @@
 ---
+name: gtm-animate
 description: "Create animated video ads with Remotion"
 argument-hint: "campaign-name"
 ---

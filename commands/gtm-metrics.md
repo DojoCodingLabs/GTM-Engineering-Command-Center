@@ -1,4 +1,5 @@
 ---
+name: gtm-metrics
 description: "Pull and analyze campaign metrics from Meta + PostHog"
 argument-hint: ""
 ---

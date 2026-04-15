@@ -1,4 +1,5 @@
 ---
+name: gtm-learn
 description: "Review metrics, save learnings, update strategies"
 argument-hint: ""
 ---

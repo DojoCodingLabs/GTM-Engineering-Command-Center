@@ -1,4 +1,5 @@
 ---
+name: gtm-create
 description: "Generate ad creatives with Nano Banana 2"
 argument-hint: "campaign-plan-file (optional)"
 ---
