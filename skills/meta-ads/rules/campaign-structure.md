@@ -248,3 +248,80 @@ Create custom audiences for exclusions:
 - All purchasers (lifetime)
 - All leads (last 90 days)
 - All registrations (last 30 days)
+
+## Post-Andromeda Campaign Structure (April 2026)
+
+The old 4-stage funnel (TOF/MOF/BOF) is dead. Andromeda handles audience distribution internally based on creative signals. The new structure is radically simpler.
+
+### The Consolidation Rule
+
+**One ad set, all creatives inside.** Fewer ad sets, more ads per ad set. Andromeda's Entity Clustering means the algorithm needs creative diversity within a single ad set to efficiently test and distribute. Splitting creatives across many ad sets fragments the learning signal.
+
+### Testing Phase
+
+Structure per product per country:
+
+```
+Campaign: [Product] - [Country] - Testing - [Date]
+  Type: ABO or tCPA/tROAS
+  Duration: Exactly 7 days
+  │
+  ├── Ad Set 1: [Persona A] - [Landing Page A]
+  │   └── 3-5 visually distinct creatives (different formats: static, video, carousel)
+  │
+  ├── Ad Set 2: [Persona B] - [Landing Page A]
+  │   └── 3-5 visually distinct creatives
+  │
+  └── Ad Set 3: [Persona A] - [Landing Page B]
+      └── 3-5 visually distinct creatives
+
+  MAX: 3-5 ad sets (one per persona + landing page combination)
+  RULE: 1 campaign per product per country. Never mix.
+```
+
+**Visually distinct** means each creative produces a different Entity ID in Andromeda. Same image with different text = NOT distinct. Need different images, different formats, different visual hooks.
+
+### Graduation Criteria
+
+A creative/ad set graduates from testing when ALL three conditions are met:
+1. **CPA <= 1.3x target** over the 7-day test period
+2. **CTR above median** of all creatives in the test
+3. **50+ purchase events** (sufficient data for statistical confidence)
+
+### Scaling Phase
+
+Winners graduate to a dedicated scaling campaign:
+
+```
+Campaign: [Product] - [Country] - Scale - [Date]
+  Type: CBO with Bid Cap (set at 0.7x target CPA)
+  │
+  └── Ad Set: Winners Only
+      └── All graduated creatives (consolidate into ONE ad set)
+
+  Budget scaling: +20-30% when CPA stays below target for 5 straight days.
+  NEVER increase budget by more than 30% in a single edit.
+```
+
+### Catch-All Campaign
+
+Losers and fatigued creatives don't get deleted -- they go to the catch-all:
+
+```
+Campaign: [Product] - [Country] - Catch-All - [Date]
+  Type: CBO with Bid Cap (0.7x target CPA)
+  │
+  └── Ad Set: Retired Creatives
+      └── All non-graduated and fatigued creatives
+
+  Purpose: Occasionally a "loser" finds a niche audience at ultra-low bids.
+  Budget: Minimal. Let the bid cap do the work.
+```
+
+### Mandatory Requirements
+
+Every post-Andromeda campaign MUST have:
+- **180-day purchaser exclusion** -- Custom audience of all purchasers in the last 180 days
+- **CRM exclusion** -- Upload your full customer list and exclude from acquisition campaigns
+- **CAPI with EMQ 8+** -- Server-side conversion tracking with full user data parameters
+- **Strict naming conventions** -- Follow the naming patterns above for campaign, ad set, and ad names. Andromeda-era debugging depends entirely on clean naming since manual audience signals are gone.

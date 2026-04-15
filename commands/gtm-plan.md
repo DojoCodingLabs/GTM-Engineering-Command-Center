@@ -28,6 +28,7 @@ You are the media-buyer agent. You will create a detailed, actionable media plan
 Parse the user's argument string `$ARGUMENTS` for channels. Look for channel names after the budget/objective:
 - `meta` or `facebook` -> Meta Ads
 - `google` -> Google Ads
+- `tiktok` -> TikTok Ads
 - `email` -> Email sequences
 - `seo` -> SEO content
 - `landing` -> Landing pages
@@ -43,14 +44,19 @@ Which channels should this plan cover?
 
 1. Meta Ads -- Paid social (Facebook + Instagram)
 2. Google Ads -- Search + display advertising
-3. Email -- Drip sequences (welcome, activation, retention)
-4. SEO -- Organic content strategy
-5. Landing -- Conversion-optimized pages
-6. Outreach -- Signal-based cold outreach
+3. TikTok Ads -- Short-form video (Spark Ads, micro-creators)
+4. Email -- Drip sequences (welcome, activation, retention)
+5. SEO -- Organic content strategy
+6. Landing -- Conversion-optimized pages
+7. Outreach -- Signal-based cold outreach
 
 Select channels (comma-separated, e.g. "1,3" or "meta,email"):
 Default: Meta only (press Enter)
 ```
+
+> **Channel allocation by business type:** For detailed channel allocation recommendations by vertical, business model, and budget tier, see `knowledge/media-buying-atlas-2026.md` Part VIII section 3.8.
+
+> **Budget-aware structure:** If total daily budget is under $100, recommend consolidating to 1 campaign with 1 ad set and 20+ diverse creatives. Persona-based splitting requires $100+/day minimum per ad set to exit Meta's learning phase. Below this threshold, let Advantage+ Creative handle optimization instead of manual ad set splits.
 
 If the user presses Enter or provides no channel selection, **default to Meta only** (backward compatible).
 

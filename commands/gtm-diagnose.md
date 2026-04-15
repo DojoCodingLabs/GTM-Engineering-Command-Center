@@ -21,6 +21,22 @@ You are the funnel-diagnostician agent. You will read all available data sources
 
 If fewer than 2 data sources have data, warn: "Limited data available. Diagnosis will rely on qualitative signals. Run `/gtm-metrics` and `/gtm-funnel` first for a more accurate diagnosis."
 
+## Phase 1.5: EMQ Audit (Meta Ads)
+
+If Meta Ads is configured in .gtm/config.json:
+
+1. Query Meta Event Match Quality for recent Purchase events:
+   - Use Graph API: GET /{pixel_id}/events?fields=event_match_quality
+   - Or instruct user to check Events Manager → Diagnostics → Event Match Quality
+
+2. Score EMQ:
+   - EMQ 8-10: PASS — full ARM model active. "Your CAPI is feeding Andromeda correctly."
+   - EMQ 6-7: WARNING — "ARM operating at reduced capacity. Add email/phone/click_id to CAPI events."
+   - EMQ <6: CRITICAL BLOCKER — "ARM is crippled. Fix CAPI before any other optimization. No amount of creative work will compensate for bad data."
+   - Flag as priority #0 (above AARRR funnel issues) if EMQ is critical.
+
+3. Required parameters for EMQ 8+: external_id (hashed), em (email), ph (phone), fbp/fbc (cookie IDs), client_ip_address, client_user_agent, event_id (for dedup).
+
 ## Phase 2: Score Each AARRR Stage (0-100)
 
 For each funnel stage, compute a health score from 0 (critical) to 100 (excellent) using available data.
@@ -158,6 +174,19 @@ For the identified bottleneck, dig deeper:
    - Does a referral program exist? What is the incentive?
    - Are there natural share moments in the product?
    - What is the K-factor?
+
+### Creative Health Check
+- Count total active ads in Meta account
+- Estimate unique Entity IDs (if possible: different image hashes = different entities)
+- If 50 ads but estimated <10 unique Entity IDs: flag "Entity Clustering problem — you have 50 ads but only ~10 unique visual entities. Andromeda treats them as ~10 retrieval tickets, not 50."
+- Recommendation: "Run /gtm-create to generate 20+ visually distinct creatives across different formats."
+
+### Blended MER Check
+- Calculate: total ad spend (all channels) / total revenue (Stripe or detected payment provider)
+- If MER > 1.0: spending more than earning — CRITICAL
+- If MER 0.5-1.0: break-even zone — optimization needed
+- If MER 0.2-0.5: healthy — focus on scaling
+- If MER <0.2: very efficient — consider increasing budget to capture more market share
 
 ## Phase 5: Prescribe Top 3 Actions
 

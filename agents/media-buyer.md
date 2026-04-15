@@ -280,3 +280,43 @@ Use both channels when:
 - Review weekly. If one channel's CPA is 2x+ the other, shift 20% of its budget to the winning channel.
 - Never kill a channel entirely based on 1 week of data. Wait for 2-3 weeks and 50+ conversions before making major shifts.
 - Retargeting budget should be proportional to site traffic. No traffic = no retargeting budget.
+
+## Budget-Aware Campaign Structure (April 2026)
+The old structure (multiple ad sets per persona) is WRONG at low budgets. Each ad set needs 50 purchase events to exit learning. At $20/day, you can't even exit learning on ONE ad set.
+
+| Daily Budget | Structure |
+|-------------|-----------|
+| Under $50/day | 1 campaign, 1 ad set, 15-20 creatives. All budget in one place. Let Andromeda segment internally. |
+| $50-$100/day | 1 campaign, 1-2 ad sets (1 broad + 1 retargeting). 20+ creatives in prospecting ad set. |
+| $100-$500/day | 1 campaign, 2-3 ad sets. One per persona + landing page combo. 10+ creatives per ad set. |
+| $500+/day | ASC+ (60-70%) + CBO testing (20-30%) + retargeting (10-15%). Existing customer cap 10-15%. |
+
+## Flood + Underbid Testing
+The contrarian $0 testing method from $80M+ operators:
+- Structure: 1 CBO, 100+ visually distinct creatives, inflated budget, low bid cap (0.7x target CPA)
+- Losers spend almost nothing and die naturally. Winners self-select and scale.
+- For low-budget accounts: if target CPA is $5 and you test 20 creatives, budget = 20 × $5 × 0.7 = $70/day. Most creatives won't spend.
+- Graduation: winners move to dedicated scaling CBO with cost cap.
+
+## Patience Paradox
+If CPA ≤ 1.2x target for 5 straight days AND daily spend > $500: LOCK the adset. No new creatives, no bid changes, no budget changes for 14 days. Let Andromeda compound. The biggest mistake is touching profitable ad sets.
+
+## TikTok Channel (April 2026)
+Add TikTok to channel recommendations:
+- CPMs: $4-12 (25-40% cheaper than Meta)
+- Engagement: 5x Instagram, 37x Facebook
+- ROAS: 1.4x median (lower than Meta's 2.2x but cheaper reach)
+- Best for: discovery/top-of-funnel, Gen Z, TikTok Shop (10%+ conversion rates)
+- TikTok → Meta → Google funnel: TikTok for cheap discovery, Meta for retargeting, Google for intent capture. 15-20% lower blended CAC vs Meta-only.
+
+## Cross-Platform Budget by Business Type (April 2026)
+| Type | Meta | Google | TikTok | LinkedIn | X.com |
+|------|------|--------|--------|----------|-------|
+| DTC Ecommerce | 50-60% | 30-40% | 10-20% | 0% | 0-5% |
+| B2B SaaS | 20-30% | 35-45% | 5-10% | 20-30% | 0-5% |
+| Info Products | 50-70% | 15-25% | 10-20% | 0-5% | 5-10% |
+| Crypto/Web3 | 20-30% | 10-20% | 15-25% | 5-10% | 20-30% |
+| Local Services | 30-40% | 50-60% | 5-10% | 0-5% | 0% |
+
+## pLTV Bidding
+For mature accounts (30-50 weekly purchases with value data): upgrade from first-order purchase value to predicted 12-month LTV sent via CAPI. Standard value bidding: ~15% ROAS lift. pLTV bidding: 20-30% CAC reduction.

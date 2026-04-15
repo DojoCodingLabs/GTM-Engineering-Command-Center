@@ -192,6 +192,40 @@ After generating images, save the successful prompts to `.gtm/learnings/creative
 
 Append to the file, never overwrite existing entries. This builds a library of proven prompts.
 
+## Andromeda Entity ID Diversity (Critical April 2026 Rule)
+- NEVER generate 5 variations of the same image with different text. Andromeda's Entity Clustering treats them as ONE retrieval ticket. You get 1 auction chance, not 5.
+- Each creative MUST be visually distinct: different persona (face, age, ethnicity, environment), different format (static, UGC, carousel, meme, claymation, VSL), different style.
+- **Minimum 20 visually distinct creatives per campaign launch.** Generate across 4 levers:
+  1. Persona: 4-5 different human representations
+  2. Messaging: 4-5 different pain points or benefits
+  3. Hook: Cover all 6 categories (Problem-aware, Benefit-led, Social proof, Direct offer, Curiosity, Comparison)
+  4. Format: Mix of static (60-70% of conversions per Pilothouse), UGC video, carousel, meme/absurd, VSL
+
+## The 6 Hook Categories
+Every creative batch must include at least one creative from each:
+1. Problem-aware: "Still dealing with [pain]?"
+2. Benefit-led: "Imagine waking up with [result]"
+3. Social proof: "Join [number]+ who already [achieved result]"
+4. Direct offer: "Get [product] for [price] (normally [higher price])"
+5. Curiosity: "The [topic] hack nobody talks about"
+6. Comparison: "Why [product] beats [competitor] (and it's not close)"
+
+## Static Image Priority
+Pilothouse Digital ($1B+ managed revenue) data: static images still drive 60-70% of conversions on Meta. ALWAYS include static image creatives alongside video. Do not default to video-only.
+
+## Deliberately Absurd Formats
+The highest scroll-stop rates come from deliberately absurd creatives: claymation, talking animals, talking food, talking body parts, Pixar-style 3D. These sidestep uncanny valley entirely. Use Nano Banana Pro for 3D clay/Pixar style generation. AI artifacts become part of the aesthetic.
+
+## AI UGC Pipeline
+For Entity ID diversity at scale, reference these tools:
+- VidAU / Proom.ai: Upload product image + script → 8-60 second UGC videos with synthetic humans
+- Arcads: 1,000+ AI actors, generate video ads from text prompts, localization in 30+ languages
+- Creatify: $39-$99/month vs $3K-$15K/video from agencies. Doubled CTR from 4-5% to 9-10%.
+One script → 50-200 visually distinct avatars/week → each becomes its own Entity ID.
+
+## Creative Fatigue Pre-Check
+Before generating new creatives, check if visually similar creatives already exist in the account. Meta's new Creative Fatigue Indicator (April 2026) throttles delivery for visually similar ads BEFORE launch. If the account already has 20 static image ads with dark backgrounds and lilac text, generate a completely different visual style (claymation, UGC, bright backgrounds, meme format).
+
 ## Copy Rules
 
 1. **Write for developers and technical buyers.** No corporate fluff. No "leverage synergies." Be specific, technical, and honest.

@@ -164,3 +164,104 @@ Upload all 5x5x5 = 125 possible combinations. Meta's algorithm will find the win
 - Numbers and stats work the same way: "87% de nuestros estudiantes..." is universally effective
 - Emojis are acceptable and even expected in Meta ad copy for LATAM audiences
 - Currency: show USD for premium products, local currency for mass market
+
+## The 6 Hook Categories (April 2026)
+
+Every visual creative needs copy variations drawn from ALL 6 hook categories. This maximizes Entity ID diversity within Andromeda because different hook types attract different user segments.
+
+### 1. Problem-Aware
+Lead with the pain point the audience already feels.
+- "Still dealing with deployment failures every Friday?"
+- "Tired of losing customers to slow page loads?"
+- "Why is your CI/CD pipeline still manual in 2026?"
+
+### 2. Benefit-Led
+Paint the aspirational outcome without mentioning the problem.
+- "Imagine deploying with zero downtime, every single time."
+- "Wake up to a dashboard showing 3x more signups."
+- "Ship code 10x faster without hiring a single DevOps engineer."
+
+### 3. Social Proof
+Use numbers and community to trigger FOMO.
+- "Join 2,400+ engineering teams who already ship daily."
+- "Why 500 CTOs switched in the last 90 days."
+- "The platform trusted by teams at [Company A], [Company B], and [Company C]."
+
+### 4. Direct Offer
+Lead with the deal. No preamble.
+- "Get automated CI/CD for $0 for 14 days."
+- "Start your free trial -- set up in 4 minutes."
+- "50% off annual plans. This week only."
+
+### 5. Curiosity
+Create an information gap that demands a click.
+- "The deployment hack nobody talks about."
+- "We analyzed 12,000 deploys. Here's what the top 1% do differently."
+- "This one config change cut our build time by 73%."
+
+### 6. Comparison
+Position against the alternative (competitor or status quo).
+- "Why teams are switching from [Competitor] in droves."
+- "Manual deployments vs. automated: the real cost comparison."
+- "[Product] vs. doing it yourself: 47 hours saved per sprint."
+
+### Application Rule
+Every visual creative must have at least one copy variation from EACH of the 6 categories. This means 6 minimum primary text variations per visual, not 5.
+
+## Copy Velocity (30-50+ Variations Per Visual)
+
+In the Andromeda era, copy variations within a single visual are cheap to produce and free to test (they share one Entity ID). The winning strategy is high-volume copy generation per visual.
+
+### Production Pipeline
+
+1. **Mine 30 distinct angles** from research data (reviews, community posts, support tickets, competitor ads, reddit threads)
+2. **Generate per visual:**
+   - 10 primary texts (2+ from each hook category)
+   - 15 headlines (3+ from each hook category)
+   - 10 descriptions (benefit, proof, urgency, guarantee, feature variations)
+   - 5 CTAs (SIGN_UP, LEARN_MORE, GET_STARTED, TRY_FREE, SUBSCRIBE)
+3. **Result:** 1 winning visual x 50 copy variations = 50 chances to find the angle Meta's algorithm favors for today's audience
+
+### Why This Works
+Since all copy variations share one Entity ID (same visual), they don't dilute your retrieval budget. They only compete AFTER Andromeda retrieves the entity. More copy variations = more chances to win the ARM ranking stage.
+
+## Angle Mining
+
+Never write copy from imagination. Always mine angles from real data first.
+
+### Research Sources (In Priority Order)
+
+1. **Customer reviews** (your product + competitors) -- Real language, real pain points
+2. **Community posts** (Reddit, Discord, Slack groups) -- Unfiltered problems and desires
+3. **Support tickets** -- The exact words people use when frustrated
+4. **Sales call transcripts** -- Objections reveal the highest-leverage angles
+5. **Competitor ads** (Meta Ad Library) -- What hooks are they running? What copy patterns repeat?
+6. **Amazon/G2/Capterra reviews** -- For SaaS/ecom, these are gold mines of customer language
+
+### Extraction Process
+
+For each source, extract:
+- **Pain quotes** -- Exact phrases describing the problem ("I spent 3 hours trying to...")
+- **Desire quotes** -- Exact phrases describing the dream outcome ("I just want to be able to...")
+- **Objection quotes** -- Exact phrases revealing hesitation ("I would try it but...")
+- **Trigger events** -- What happened right before they searched for a solution?
+
+Use extracted quotes as raw material for all 6 hook categories above.
+
+## Brand Voice Locker
+
+All generated copy MUST match the project's existing tone and terminology.
+
+### Before Writing Any Copy
+
+1. Check the project's existing ad copy, landing pages, and marketing materials
+2. Note the tone (casual vs. professional, technical vs. accessible)
+3. Note specific terminology (do they say "platform" or "tool"? "users" or "teams"? "deploy" or "ship"?)
+4. Note formatting preferences (emojis or no emojis? Bullet points or paragraphs? Short or long form?)
+
+### Enforcement Rules
+
+- **Never invent new brand language** -- Use terms already established in the project's marketing
+- **Match the energy level** -- If existing copy is understated, don't write hype copy
+- **Preserve voice consistency** across all 6 hook categories -- the hook type changes, the voice stays the same
+- **When in doubt, reference the landing page** -- The landing page is the source of truth for brand voice

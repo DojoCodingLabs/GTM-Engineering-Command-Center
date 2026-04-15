@@ -173,3 +173,128 @@ Goal: Dominate your category.
 6. **Optimizing for clicks instead of conversions** -- High CTR with low CVR = wrong audience
 7. **No exclusions** -- Always exclude existing customers from acquisition campaigns
 8. **Weekend panic** -- B2B campaigns naturally dip on weekends, don't panic-pause Friday afternoon
+
+## Patience Paradox (April 2026)
+
+The single most important optimization rule in the Andromeda era: **when profitable, DO NOTHING.**
+
+### The Rule
+
+If CPA <= 1.2x target for 5 straight days at $500+/day spend: **lock the ad set for 14 days.**
+
+During the lock period:
+- **No new creatives** added to the ad set
+- **No bid changes**
+- **No budget changes** (except scheduled increases already planned)
+- **No audience adjustments**
+- **No pausing individual ads** within the set
+
+### Why This Works
+
+Andromeda's pattern recognition builds a compounding model of your ideal customer. Every edit -- even a "minor" one -- resets this model. Frequent edits interrupt the algorithm's ability to identify and expand high-value audience pockets.
+
+The top $100M+/year advertisers are patient. They let winning ad sets run undisturbed while concentrating all iteration in separate testing campaigns. The scaling campaign is a "set it and forget it" machine.
+
+### When to Break the Lock
+
+Only break the 14-day lock if:
+- CPA exceeds 2x target for 3 consecutive days (not just 1 bad day)
+- Delivery drops to near-zero (algorithm has exhausted the audience)
+- External event changes the market (competitor launches, news cycle, etc.)
+
+## Creative Fatigue Detection (April 2026)
+
+Meta introduced two new delivery statuses that provide early warning of creative exhaustion:
+
+### "Creative Limited" (Pre-Launch)
+- Andromeda detected visual similarity to existing ads in your account
+- Delivery will be **reduced before the ad even launches**
+- Action: Replace with a genuinely different visual. Text changes alone will not clear this flag.
+
+### "Creative Fatigue" (Post-Launch)
+- The audience pool for this visual is exhausted
+- All exposures across your entire Page are counted (including organic posts)
+- Action: Retire the creative to the catch-all campaign. Create new visuals.
+
+### Monitoring Cadence
+- Check creative status **daily** during the first 7 days of any new creative
+- Check **weekly** for all active creatives in scaling campaigns
+- If 3+ creatives are flagged "Creative Limited" in a single week, your creative production pipeline is not diverse enough
+
+## EMQ Monitoring (Weekly Audit)
+
+Add Event Match Quality to your weekly optimization audit alongside CPA, ROAS, and creative health.
+
+### The EMQ Check
+1. Open Events Manager > Data Sources > Your Pixel
+2. Check EMQ score for your top conversion events (Purchase, Lead, CompleteRegistration)
+3. Goal: EMQ 8+ on 80%+ of events
+
+### EMQ Red Flags
+- **EMQ <7 on >20% of events:** ARM is crippled. Fix CAPI immediately before any other optimization.
+- **EMQ declining week over week:** Something changed in your tracking stack. Investigate.
+- **EMQ varies by event type:** Common when Purchase events have better data than Lead events (different pages capture different parameters).
+
+### CAPI Fixes (Priority Order)
+1. Deploy server-side CAPI container (Stape or Weld)
+2. Ensure `external_id`, `em`, `ph`, `fbp`/`fbc`, `ct`, `client_user_agent` are sent with every event
+3. Implement redundant event deduplication (event_id matching between pixel + CAPI)
+4. Test with Meta Event Debugger on live production traffic
+
+## Blended MER (Marketing Efficiency Ratio)
+
+In the post-attribution-upheaval world (March 2026), platform-reported ROAS is unreliable. Use blended MER as your source of truth.
+
+### Formula
+
+```
+MER = Total Ad Spend (all platforms) / Total Revenue (all sources)
+```
+
+### Why MER > Platform ROAS
+- Every platform over-claims credit (Meta, Google, TikTok all take credit for the same conversion)
+- MER doesn't care about attribution windows, click definitions, or view-through counting
+- MER measures what actually matters: is your total marketing investment generating profitable revenue?
+
+### MER Benchmarks
+| MER | Interpretation |
+|-----|---------------|
+| < 0.15 | Excellent -- spending $0.15 to make $1.00 |
+| 0.15 - 0.25 | Good -- sustainable for most margins |
+| 0.25 - 0.40 | Acceptable -- watch unit economics closely |
+| > 0.40 | Danger -- spending $0.40+ to make $1.00, likely unprofitable |
+
+### Weekly MER Tracking
+1. Sum ALL ad spend across Meta, Google, TikTok, LinkedIn, email tools
+2. Sum ALL revenue from Stripe (or payment processor)
+3. Calculate MER
+4. Compare week-over-week. Trending down = improving efficiency. Trending up = investigate.
+
+## Budget Scaling (Updated April 2026)
+
+Andromeda-era budget scaling is more conservative than pre-Andromeda.
+
+### Rules
+
+- **Never increase budget by more than 20% in a single edit** (down from the previous "soft" 20% guideline -- now a hard rule because Andromeda's model is more sensitive to budget changes)
+- **Wait 3-4 days between increases** (not 2-3 days as before)
+- **Any increase larger than 20% triggers a learning phase reset** requiring 50 optimization events/week to exit
+- If CPA spikes after increase, wait 72 hours (not 48) before reacting
+
+### Scaling Sequence
+
+```
+Day 1: CPA at target, spending $100/day
+Day 5: CPA still at target → increase to $120/day (+20%)
+Day 9: CPA still at target → increase to $144/day (+20%)
+Day 13: CPA still at target → increase to $173/day (+20%)
+Day 17: CPA still at target → increase to $207/day (+20%)
+```
+
+At this rate, you 2x budget in ~3 weeks without ever triggering a learning phase reset. Patience compounds.
+
+### When NOT to Scale
+- CPA has been above target for any 2 of the last 5 days
+- Creative Fatigue flags are appearing on your top performers
+- EMQ has dropped below 7
+- You haven't refreshed creative in 3+ weeks

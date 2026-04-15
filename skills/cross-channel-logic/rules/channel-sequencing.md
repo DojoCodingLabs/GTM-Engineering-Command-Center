@@ -250,4 +250,125 @@ B2C or low ACV → Sequence 3 (Meta-led) or Sequence 5 (Community-led)
 Strong content team → Sequence 2 (Content-led) feeding into Sequence 1
 Developer audience → Sequence 5 (Community-led)
 Visual product → Sequence 3 (Meta-led with video)
+TikTok-native audience → Sequence 6 (TikTok Discovery)
+Proven Meta winners, ready to scale → Sequence 7 (Cross-Platform)
 ```
+
+## Sequence 6: TikTok Discovery --> Meta Retarget --> Google Intent
+
+**Best for**: DTC ecommerce, visual products, audiences under 35, $5K-20K/month budget
+
+```
+Stage 1: TikTok Spark Ads (Generate Awareness at Low CPM)
+  Budget: 30% of total
+  Campaigns:
+    - Spark Ads: Boost organic TikTok content from brand or creators
+    - In-feed video ads: Native-looking 15-30s product demos
+    - TikTok Shop (if applicable): Direct purchase from the platform
+  Targeting:
+    - Interest-based (broad categories)
+    - Creator lookalikes
+    - Hashtag targeting for niche communities
+  CPMs: $4-12 (25-40% cheaper than Meta)
+  Goal: Maximum reach and engagement, build retargeting pools
+  Tracking: TikTok Pixel + UTM params (utm_source=tiktok&utm_medium=paid)
+
+  ↓ User sees product, engages but doesn't buy ↓
+
+Stage 2: Meta Retargeting (Convert TikTok Visitors Within 24 Hours)
+  Budget: 50% of total
+  Audiences:
+    - TikTok website visitors (last 7 days, via shared pixel/UTM)
+    - TikTok video viewers 75%+ (sync via custom audience upload)
+    - Website visitors from any source (last 14 days, exclude converters)
+  Creative:
+    - Different angle from TikTok (social proof, testimonials, direct offer)
+    - Conversion-optimized with strong CTA
+    - Retargeting-specific messaging ("You were looking at X...")
+  Goal: Convert warm audience at scale
+  Tracking: Meta Pixel, CAPI with EMQ 8+, UTM params
+
+  ↓ User develops intent but needs more info ↓
+
+Stage 3: Google Search (Capture Branded Intent)
+  Budget: 20% of total
+  Campaigns:
+    - Branded search (exact match + phrase match on brand name)
+    - Product category search (high-intent non-branded terms)
+  Goal: Capture the intent created by TikTok awareness + Meta retargeting
+  Tracking: GCLID, Google Ads conversion tag
+  Expected result: Highest conversion rate, lowest CPA of all three stages
+
+Implementation timeline: 3-4 weeks
+Expected blended CAC: 15-20% lower than Meta-only campaigns
+```
+
+## Sequence 7: Meta Winner --> Cross-Platform Scale
+
+**Best for**: Advertisers with proven Meta creative, $10K+/month budget, ready to diversify
+
+```
+Stage 1: Meta Advantage+ Creative Testing (Find Winners)
+  Budget: 50-60% of total (initially 100%, then reallocate)
+  Process:
+    - Run 50-200 visually distinct creatives in ASC+ or CBO testing
+    - 7-day test cycles
+    - Identify top 5-10 creatives by ROAS/CPA
+    - Document winning: angles, hooks, formats, audiences
+  Goal: Creative intelligence -- know WHAT works and WHY
+  Tracking: Full Meta attribution, breakdown by body/title/image asset
+
+  ↓ Winners identified (CPA ≤ 1.3x target, 50+ conversions) ↓
+
+Stage 2: Cross-Platform Deployment (Scale Winners Everywhere)
+  Budget: Reallocate 40-50% to other platforms
+  Deployment map:
+    - Google Demand Gen: Winning images as responsive display assets,
+      winning video as YouTube Shorts
+    - YouTube Shorts: Recut winning Meta videos to 15-60 seconds,
+      use as in-stream and Shorts ads
+    - TikTok: Reshoot winning concepts as native TikTok content,
+      deploy as Spark Ads if possible
+    - LinkedIn (B2B only): Adapt winning messaging angles to
+      long-form thought leader posts
+  Goal: Apply proven creative intelligence across all channels
+  Tracking: Unified UTM strategy, blended MER as source of truth
+
+  ↓ Cross-platform data feeds back ↓
+
+Stage 3: Feedback Loop
+  - Performance data from Google/TikTok/LinkedIn reveals platform-specific preferences
+  - Use insights to create platform-optimized variations of winning concepts
+  - Feed new variations back into Meta testing to discover next generation of winners
+  Goal: Continuous creative improvement across all platforms
+
+Implementation timeline: 4-6 weeks for full deployment
+Expected result: 20-30% more efficient spend through creative diversification
+```
+
+## Cross-Platform Budget by Business Type
+
+These allocations assume a mature campaign with at least 30 days of data on the primary channel (Meta). Adjust based on actual ROAS/CPA by channel.
+
+### DTC Ecommerce
+| Channel | % of Budget | Role |
+|---------|-------------|------|
+| Meta (ASC+ + CBO) | 50-60% | Primary acquisition + retargeting |
+| Google (Shopping + Search) | 30-40% | Intent capture + product discovery |
+| TikTok (Spark + Shop) | 10-20% | Awareness + younger demographic |
+
+### B2B SaaS
+| Channel | % of Budget | Role |
+|---------|-------------|------|
+| Meta (Lead Gen) | 20-30% | Awareness + retargeting warm audiences |
+| Google (Search + Demand Gen) | 35-45% | High-intent lead capture |
+| LinkedIn (Thought Leader Ads) | 20-30% | Decision-maker targeting |
+| TikTok | 0-5% | Only if audience skews young/tech |
+
+### Info Products / Online Courses
+| Channel | % of Budget | Role |
+|---------|-------------|------|
+| Meta (Advantage+ + Retargeting) | 50-70% | Primary acquisition (visual storytelling) |
+| Google (Search + YouTube) | 15-25% | Intent capture + authority building |
+| TikTok (Spark Ads) | 10-20% | Discovery + social proof via UGC |
+| LinkedIn | 0-5% | Only for B2B-adjacent topics |

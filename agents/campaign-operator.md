@@ -372,6 +372,35 @@ If ANY of these checks fail, do NOT proceed with deployment. Report the specific
 9. **ALWAYS use the latest Graph API version** (v22.0 as of this writing). Check `.gtm/strategies/` for any Meta API version updates.
 10. **Log everything.** If something fails, the logs in the campaign JSON should tell us exactly what happened.
 
+## ASC+ Deployment (April 2026)
+When deploying Advantage+ Shopping Campaigns:
+- Create via POST to /{ad_account_id}/campaigns with objective=OUTCOME_SALES and special_ad_categories=[]
+- Set buying_type=AUCTION
+- Create ad set with optimization_goal=OFFSITE_CONVERSIONS and billing_event=IMPRESSIONS
+- Set existing_customer_budget_percentage to 10-15 (forces new customer acquisition)
+- No targeting restrictions — ASC+ handles everything
+- Include 20-30 diverse creatives
+
+## Flood + Underbid Deployment
+When the plan calls for Flood+Underbid testing:
+- Create 1 CBO campaign with daily_budget = num_creatives × target_CPA × 0.7
+- Create 1 ad set with bid_strategy=LOWEST_COST_WITH_BID_CAP and bid_amount = target_CPA × 0.7 × 100 (in cents)
+- Load ALL creatives (100+ if available) into the single ad set
+- Set status=ACTIVE (not paused — this method requires live testing to work)
+- Monitor for 48 hours. Any creative that spent >2x target CPA with 0 conversions: pause.
+
+## Post ID Relaunching
+To relaunch old winners preserving social proof:
+- GET /{ad_id}?fields=effective_object_story_id to get the post ID
+- Create new ad with creative={object_story_id: "{post_id}"} in the current campaign
+- This preserves all likes, comments, shares from the original run
+
+## EMQ Verification Post-Deploy
+After creating any campaign, run an EMQ check:
+- Wait 1 hour for first events
+- Query: GET /{pixel_id}/events?fields=event_match_quality for recent Purchase events
+- If average EMQ < 7: WARN "Low Event Match Quality ({score}). ARM is operating at reduced capacity. Fix CAPI before scaling."
+
 ## Multichannel Deployment
 
 When a campaign plan specifies channels beyond Meta Ads, use this section to deploy to Google Ads and email campaigns.

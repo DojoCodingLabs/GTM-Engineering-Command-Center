@@ -165,3 +165,77 @@ This shows performance per asset, helping you identify winners and losers.
 | 100 | Missing required field in asset_feed_spec | Check all required fields above |
 | 1487390 | `object_story_spec` used instead of `asset_feed_spec` | Switch to asset_feed_spec format |
 | 1815946 | Missing `instagram_actor_id` | Add Instagram account ID to object_story_spec |
+
+## Entity Clustering Warning (April 2026)
+
+Andromeda's Entity Clustering system groups visually similar creatives as a single retrieval entity. This fundamentally changes how `asset_feed_spec` text variations work.
+
+**The problem:** If you upload 1 image and provide 5 body texts + 5 titles + 5 descriptions, Advantage+ Creative will generate up to 125 combinations. But since they ALL share the same visual, Andromeda treats them as **1 Entity ID** = **1 retrieval ticket** in the auction.
+
+```
+50 ads with same image + different text = 1 retrieval ticket
+5 ads with different images + same text = 5 retrieval tickets
+```
+
+**What "real diversity" means now:**
+- Different images (not crops/filters of the same image -- genuinely different visuals)
+- Different video content (different hooks, different footage, different pacing)
+- Different formats (static image vs. video vs. carousel = different entity types)
+- Different visual compositions (faces vs. no faces, dark vs. light, close-up vs. wide)
+
+**Practical approach:** Use `asset_feed_spec` text variations for copy optimization within a single visual entity. But create SEPARATE ads for each visually distinct creative. Don't rely on text variations alone to provide creative diversity.
+
+## ASC+ (Advantage+ Shopping Campaigns)
+
+ASC+ is now the dominant campaign type for ecommerce, capturing 62% of ecom spend with 22% higher ROAS than manual campaigns.
+
+### ASC+ Structure
+
+```json
+{
+  "objective": "OUTCOME_SALES",
+  "buying_type": "AUCTION",
+  "special_ad_categories": [],
+  "smart_promotion_type": "GUIDED_CREATION",
+  "is_budget_schedule_enabled": false
+}
+```
+
+### Budget Allocation
+
+- **60-70%** of total ad budget goes to ASC+
+- **20-30%** to CBO testing campaign for creative discovery
+- **10-15%** to dedicated retargeting
+
+### Existing Customer Budget Cap
+
+Set the existing customer percentage cap at **10-15%** in ASC+ settings. This prevents Meta from spending acquisition budget on existing customers who would convert anyway. Without this cap, ASC+ will over-index on easy conversions (existing customers) at the expense of new customer acquisition.
+
+### Catalog Ads with Design Rules
+
+Catalog ads with Design Rules produce **+31% ROAS** and critically, they do NOT reset learning phase when updated. You can iterate on catalog creative rules without losing optimization data.
+
+### Video Catalog Ads
+
+Video Catalog Ads are treated as a **different entity type** by Andromeda. Adding video catalog ads to an ASC+ campaign effectively doubles your retrieval tickets compared to static catalog alone. Always include both formats.
+
+## Optimization Event Ladder
+
+Start new campaigns with a lower-funnel-but-higher-volume event, then graduate up:
+
+1. **Start with Add to Cart (ATC) optimization** -- Higher volume event, exits learning phase 2-3x faster than Purchase optimization
+2. **Once stable (50+ ATC events/week, consistent CPA):** Switch to Purchase optimization
+3. **Never start with Purchase optimization** on a cold campaign -- insufficient signal density causes erratic delivery
+
+This is especially critical for ASC+ campaigns where the algorithm needs fast feedback loops.
+
+## Cost Cap Graduation
+
+After a campaign exits the learning phase with Highest Volume (Lowest Cost) bid strategy:
+
+1. **Graduate to Cost Cap** -- Set cost cap at 1.2x your current CPA
+2. This creates a "Hunger Games" dynamic among your ads -- only the most efficient survive
+3. Gradually tighten the cost cap as performance stabilizes
+4. **Never start a new campaign with Cost Cap** -- the algorithm needs unconstrained learning first
+
+The graduation sequence: **Highest Volume → Cost Cap → Bid Cap (for catch-all only)**

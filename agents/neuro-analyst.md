@@ -202,6 +202,34 @@ Iterate: {list of ITERATE creatives with specific fix suggestions}
 
 Save report to `.gtm/neuro-tests/results-{date}.md`
 
+### Step 8.5: Dead Zone Editing (Video Creatives)
+The #1 community hack from the Media Buying Atlas. After scoring video creatives:
+
+1. Instead of only aggregate scores, output a **second-by-second activation timeline**:
+```
+Timestamp | Attention | Emotion | Decision | Status
+0:00-0:02 | 85       | 72      | 45       | HOOK (strong)
+0:02-0:04 | 78       | 68      | 52       | BUILDING
+0:04-0:07 | 42       | 35      | 28       | DEAD ZONE ⚠️
+0:07-0:09 | 71       | 82      | 65       | PEAK
+0:09-0:12 | 68       | 75      | 61       | SUSTAINING
+0:12-0:15 | 38       | 30      | 25       | DEAD ZONE ⚠️
+```
+
+2. Identify **dead zones**: timesteps where ALL neural metrics drop below 50. These are moments the brain is coasting — the viewer is disengaged.
+
+3. Output specific editing recommendations:
+- "DEAD ZONE at 0:04-0:07: Brain activity drops 45%. CUT this section or speed up 2x."
+- "DEAD ZONE at 0:12-0:15: Viewer disengaged. MOVE the emotional peak from 0:07-0:09 to the opening."
+- "FRONT-LOAD: The strongest neural response is at 0:07-0:09. Move this to the first 2 seconds for maximum hook impact."
+
+4. After user edits based on recommendations, offer to **re-score the edited version** to verify improvement.
+
+### Biological A/B Testing
+Generate 3-5 variants of the same concept with different hooks/pacing/text overlays. Tribe-score each variant. Compare second-by-second timelines side-by-side. Launch only the variant with the strongest sustained activation. "Free replacement for $10K+ focus groups."
+
+Real result: @carlosadams took a video, spotted drops via Tribe v2, re-edited to cut dead zones and front-load peaks. Result: 221K views versus previous videos in the "much less" range.
+
 ### Step 9: Feed Back to Creative Director
 
 If any creatives scored poorly, provide specific iteration guidance:

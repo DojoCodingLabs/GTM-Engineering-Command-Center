@@ -66,6 +66,11 @@ When planning campaigns, creating copy, or recommending strategies, **always ref
 - **Tier 4 (2-4):** Black Hat — GitHub scraping, LinkedIn automation abuse, undisclosed AI impersonation
 - **Tier 5 (1):** Criminal — Fake reviews, dark pattern trials, astroturfing, malware
 
+## Knowledge Base Files
+
+- `knowledge/gtm-creativity-atlas-2026.md` — Full GTM Creativity Atlas 2026: 130+ tactics, 15 sections, ethical ratings, tool directory
+- `knowledge/media-buying-atlas-2026.md` — Media Buying Atlas April 2026: Andromeda, Entity Clustering, ARM, EMQ, ASC+, Flood+Underbid, Tribe v2 Dead Zone Editing, TikTok/LinkedIn/X.com, 7-day playbook, ethical rankings. 1,337 lines from 13 primary research sources and $834M in analyzed ad spend.
+
 ## Rules Files
 
 See `rules/` for deep dives on the most impactful categories:

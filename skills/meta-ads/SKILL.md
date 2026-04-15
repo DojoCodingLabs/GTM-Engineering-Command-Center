@@ -244,3 +244,91 @@ META_PIXEL_ID=XXXXXXXXXX           # 15-16 digit pixel ID
 META_APP_ID=XXXXXXXXXX             # App ID from developers.facebook.com
 META_APP_SECRET=xxxxxxxx           # App secret (server-side only)
 ```
+
+## Andromeda & Entity Clustering (April 2026)
+
+Meta's Andromeda retrieval system uses computer vision to scan every creative and assign Entity IDs based on visual pixels, hook pacing, emotional tone, and text overlays. It groups visually similar ads as ONE retrieval ticket. This means 50 ads with the same image but different text = 1 Entity ID = 1 chance in the retrieval lottery.
+
+**Key implications:**
+- Minor text variations are dead as a testing strategy. Real diversity requires different images, videos, and formats.
+- You need **50-200 visually distinct Entity IDs per week** to give Andromeda enough diversity to find winners.
+- There are **4 creative levers** that produce unique Entity IDs: **Persona** (who is shown), **Messaging** (what emotion/angle), **Hook** (first 3 seconds/visual), **Format** (static, video, carousel, UGC).
+- Top performers run **395 live ads simultaneously** -- 33% more than bottom performers (Confect.io study: $834M spend, 3,014 advertisers, 1M ads, 115.7B impressions).
+- **Broad targeting + high creative diversity = 49% higher ROAS** than lookalike targeting. Let Andromeda find your audience through creative signals, not targeting restrictions.
+
+See: `rules/andromeda-2026.md` for the full Andromeda deep-dive.
+
+## ARM (Adaptive Ranking Model)
+
+ARM is the second stage of Meta's ad delivery pipeline. After Andromeda retrieves ~1,000 candidate ads, ARM ranks them based on predicted conversion probability.
+
+**Critical insight:** ARM reads your conversion data quality BEFORE evaluating your creative. Two advertisers can run identical creative and get ranked by completely different ARM model versions based on their data quality.
+
+- **EMQ 8-10** unlocks the full ARM model -- deep behavioral signals, cross-device tracking, full lookalike expansion.
+- **EMQ <7** = surface-level ranking only -- ARM uses basic demographic and interest signals, ignoring the rich conversion patterns that drive efficient delivery.
+- Weak EMQ effectively caps your ad performance regardless of creative quality.
+
+## Event Match Quality (EMQ)
+
+EMQ measures how well your conversion events can be matched back to a specific Meta user. Higher EMQ = better attribution = ARM unlocks more powerful ranking.
+
+**Required parameters for EMQ 8-10:**
+- `external_id` (hashed email or phone)
+- `em` (hashed email)
+- `ph` (hashed phone)
+- `fbp` / `fbc` (Meta browser/click cookies)
+- `ct` (city)
+- `client_user_agent`
+
+**5-Minute EMQ Audit:**
+1. Open Meta Event Debugger on your top 3 winning creatives
+2. Check every `Purchase` event for ALL required parameters above
+3. If EMQ <7 on >20% of events, ARM is crippled and your ads are underperforming regardless of creative quality
+4. **Fix:** Deploy a server-side CAPI container (Stape or Weld) to ensure all parameters are sent reliably
+
+## Creative Fatigue Indicator (New April 2026)
+
+Meta introduced two new delivery statuses in April 2026:
+
+- **"Creative Limited"** -- Visual similarity detected by Andromeda. Delivery is reduced BEFORE launch because the creative is too similar to existing ads. This is a pre-launch gate.
+- **"Creative Fatigue"** -- Audience pool exhausted for this visual. The ad has been seen too many times by the available audience.
+
+**Critical detail:** Fatigue counts ALL exposures across your entire Page, not just within a single ad set. Fatigued organic posts also affect paid delivery. If you posted the same visual organically and it saturated your audience, paid promotion of similar visuals will be throttled.
+
+## Ad Lifecycle Compression
+
+Andromeda has compressed the effective lifespan of ads:
+
+- Ads now **peak in week 1** and rapidly plateau (previously peak was weeks 2-3).
+- **Creative rotation every 2-4 weeks is mandatory** (down from the previous 6-8 week cycle).
+- Top performers run 395 live ads simultaneously, maintaining constant creative freshness.
+- The implication: your creative production pipeline is now your #1 competitive advantage, not your targeting or bid strategy.
+
+## ASC+ (Advantage+ Shopping Campaigns)
+
+ASC+ is the dominant campaign type for ecommerce, now capturing **62% of ecom spend** with a **22% ROAS improvement** over manual campaigns.
+
+**Optimal campaign structure:**
+- **1 ASC+ campaign** (60-70% of budget) -- Primary scaling vehicle
+- **1 CBO testing campaign** (20-30% of budget) -- Creative testing and audience discovery
+- **1 Retargeting campaign** (10-15% of budget) -- Website visitors, cart abandoners, past purchasers
+
+**Existing customer budget cap:** Set to **10-15%** in ASC+ settings. This prevents Meta from spending your acquisition budget on people who would buy anyway.
+
+## Attribution Upheaval (March 2026)
+
+Meta redefined attribution in March 2026:
+
+- **Click-through** now means outbound link clicks only (previously included all clicks).
+- **7-day and 28-day view-through attribution windows deprecated.**
+- Reported CPAs appear **15-30% higher** than before the change (same performance, different measurement).
+- **Source of truth:** Use **blended MER** (Marketing Efficiency Ratio = total ad spend / total revenue) instead of platform-reported ROAS. Every platform over-claims credit.
+
+## Rules Reference
+
+- `rules/andromeda-2026.md` -- Deep-dive on Andromeda retrieval, Entity Clustering, ARM ranking
+- `rules/flood-underbid.md` -- Contrarian testing method from $80M+ operators
+- `rules/campaign-structure.md` -- Objectives, hierarchy, and post-Andromeda campaign architecture
+- `rules/advantage-plus-creative.md` -- Dynamic creative API format + Entity Clustering warnings
+- `rules/pixel-setup.md` -- Pixel and CAPI implementation
+- `rules/api-gotchas.md` -- Common API errors and fixes
