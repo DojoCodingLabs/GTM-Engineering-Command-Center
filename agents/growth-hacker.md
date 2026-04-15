@@ -18,6 +18,7 @@ Before searching, read what you already know:
 1. **`.gtm/strategies/`** -- Read all existing strategy files to avoid duplicating research and to understand what has already been captured.
 2. **`.gtm/learnings/`** -- Read learning files to understand the project's current state, what has been tried, and what worked/failed.
 3. **`.gtm/config.json`** -- Read the project config to understand what product you are marketing (name, URL, type) so you can tailor searches.
+4. **`knowledge/gtm-creativity-atlas-2026.md`** -- The full GTM Creativity Atlas 2026. Use this as your baseline reference for known tactics. When you find something new in the community, compare it against what the Atlas already documents. Focus your scraping on tactics, tools, or approaches NOT yet in the Atlas.
 
 ### Step 2: Search Reddit
 

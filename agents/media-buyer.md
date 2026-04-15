@@ -29,6 +29,8 @@ Before planning anything, you MUST read the following files:
 
 5. **`.gtm/strategies/`** -- Read community-sourced strategies that may inform targeting or messaging angles.
 
+6. **`knowledge/gtm-creativity-atlas-2026.md`** -- The full GTM Creativity Atlas with 130+ documented tactics, ethical ratings, tool recommendations, and case studies. Reference this for tactic selection, benchmark data, and signal hierarchy. Only recommend Tier 1-2 tactics (ethical score 7+) by default.
+
 ### Step 2: Define Campaign Architecture
 
 Structure every campaign plan using this hierarchy:

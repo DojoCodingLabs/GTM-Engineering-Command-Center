@@ -1,212 +1,75 @@
 ---
 name: gtm-atlas
-description: GTM Creativity Atlas 2026 — signal-based selling, reverse trials, referral loops, GEO, PQL scoring, 130+ tactics
+description: GTM Creativity Atlas 2026 — 130+ documented tactics across 15 sections, ethical ratings, tool directory. The full knowledge base for autonomous GTM engineering.
 ---
 
 # GTM Creativity Atlas 2026
 
-A distilled compendium of modern go-to-market tactics organized by category. This atlas covers the full spectrum from demand generation through conversion, expansion, and viral growth.
+This skill provides access to the complete GTM Creativity Atlas 2026 — a 1,500+ line research synthesis covering 130+ documented go-to-market tactics from 2024-2026.
 
-## Core GTM Philosophy
+## Knowledge Base
 
-Traditional GTM is broken. Cold outreach response rates are below 1%. Generic ads are ignored. The 2026 playbook is built on three principles:
+The full Atlas document is at `knowledge/gtm-creativity-atlas-2026.md` in this plugin. **Read it when you need:**
 
-1. **Signal > Spray**: Target buyers showing intent, not demographics
-2. **Experience > Pitch**: Let the product sell itself through trials and value delivery
-3. **Network > Linear**: Every customer should bring the next customer
+- Specific tactic details, mechanisms, and documented results
+- Ethical ratings for any growth tactic (1-10 scale, 5-tier framework)
+- Tool recommendations and pricing for any GTM category
+- Case studies with metrics (Dropbox, Calendly, Clay, Loom, etc.)
+- Signal hierarchy for intent-based outbound
+- The complete tools directory (Appendix A)
+- The full ethical rating index (Appendix B)
 
-## Signal-Based Selling
+## How to Use This Skill
 
-Instead of blasting cold emails to a bought list, monitor buying signals and reach out at the moment of highest intent.
+When planning campaigns, creating copy, or recommending strategies, **always reference the Atlas** for:
 
-### Signal Categories
+1. **Tactic selection** — Check the ethical rating before recommending any tactic
+2. **Tool selection** — Use the Master Tools Directory (Appendix A) for current pricing and capabilities
+3. **Benchmarks** — Reference documented conversion rates, K-factors, and ROI metrics
+4. **Signal hierarchy** — Use Table 3 (Signal Hierarchy) to prioritize targeting
 
-| Signal Type | Examples | Intent Level |
-|-------------|----------|-------------|
-| **Funding signals** | Series A announced, grant received | High -- they have budget |
-| **Hiring signals** | Job posts for roles your product fills | High -- they have the pain |
-| **Tech stack signals** | Adopted a complementary tool | Medium -- ecosystem fit |
-| **Content signals** | Engaged with competitor content, searched keywords | Medium -- problem-aware |
-| **Trigger events** | Leadership change, expansion, regulation | Medium -- disruption = opportunity |
-| **Social signals** | Complained about problem on social media | High -- active pain |
+## Atlas Structure (15 Sections)
 
-### Signal-to-Action Workflow
+| Section | Topic | Key Content |
+|---------|-------|-------------|
+| 01 | Paradigm Shift | GTM Engineer role, MQL collapse, unified growth pods |
+| 02 | Modern GTM Stack | Signal-based selling, 2026 default stack, agentic architecture |
+| 03 | AI & Agentic Tactics | AI SDR platforms, Voice AI, MCP infrastructure, Agent-Led Growth |
+| 04 | Claude Code Revolution | Terminal AI vs Browser AI, Skills ecosystem, spec-driven interview |
+| 05 | Technical Growth Hacks | GitHub scraping, satellite imagery, Google Docs hack, intent harvesting |
+| 06 | Product-Led Growth | Reverse trials, PQL scoring, powered-by badges, template marketplaces |
+| 07 | Community-Led Growth | Community flywheel, Reddit as SEO, Shadow GTM, micro-creators |
+| 08 | Sales-Led Innovation | Trigger-based outbound, champion tracking, video outreach, omnichannel |
+| 09 | Content & SEO | Programmatic SEO, GEO, parasite SEO, Intercom playbook |
+| 10 | Viral & Referral | K-factor math, 5 viral loop types, waitlist engineering, NPS-to-referral |
+| 11 | Data & Intelligence | Waterfall enrichment, intent data, RB2B, Reverse ETL, Clay workflows |
+| 12 | Gray-Hat Tactics | Dark patterns, review manipulation, LinkedIn automation, legal landscape |
+| 13 | Emerging (2025-2026) | Vibe marketing, browser agents, rapid feature launch, zero-delay close |
+| 14 | Ethical Taxonomy | 5-tier framework, full rankings for all 130+ tactics |
+| 15 | Conclusion | 2027 predictions, ultimate starter playbook |
+| App A | Tools Directory | Every platform categorized: CRM, enrichment, intent, AI SDR, automation |
+| App B | Ethical Index | All 130+ tactics ranked with legal exposure assessment |
 
-```
-Signal detected (Clay/Phantombuster/custom scraper)
-  → Enrich contact (Clearbit/Apollo/LinkedIn)
-    → Score lead (signal strength x ICP fit)
-      → Route to channel:
-        - High score: personal outreach (email/LinkedIn)
-        - Medium score: automated nurture sequence
-        - Low score: add to retargeting audience
-```
+## Core Principles (Always Apply)
 
-### Signal Sources
-- **Clay**: Waterfall enrichment, job posting monitors, funding alerts
-- **LinkedIn Sales Navigator**: Saved searches with alerts for job changes, posts, company updates
-- **G2/Capterra**: Buyers comparing your category
-- **Google Alerts**: Brand/competitor mentions
-- **BuiltWith/Wappalyzer**: Technology adoption tracking
-- **Crunchbase/PitchBook**: Funding and M&A activity
+1. **Signal > Spray** — Target buyers showing intent, not demographics
+2. **Experience > Pitch** — Let the product sell itself through trials and value delivery
+3. **Network > Linear** — Every customer should bring the next customer
+4. **Ethics First** — Only recommend Tier 1-2 tactics (score 7+) unless explicitly asked otherwise
+5. **Compound > Campaign** — Prioritize tactics that build compounding assets (community, content, referral loops) over one-shot campaigns
 
-## Reverse Trial Mechanics
+## Quick Reference: Ethical Tiers
 
-Traditional free trial: give limited access, hope they upgrade. Reverse trial: give FULL access, then take it away. Loss aversion is 2x more powerful than gain motivation.
+- **Tier 1 (9-10):** White Hat — PLG, referrals, community, original research, reverse trials
+- **Tier 2 (7-8):** Light Gray — Trigger-based outbound, intent data, programmatic SEO, GEO
+- **Tier 3 (5-6):** Dark Gray — Individual visitor ID, competitor keyword bidding, cold email at scale
+- **Tier 4 (2-4):** Black Hat — GitHub scraping, LinkedIn automation abuse, undisclosed AI impersonation
+- **Tier 5 (1):** Criminal — Fake reviews, dark pattern trials, astroturfing, malware
 
-### How It Works
+## Rules Files
 
-```
-Day 0:  User signs up → Full VIP/Premium access (no credit card required)
-Day 1-14: User experiences the complete product, builds habits and data
-Day 12: Warning: "Your VIP access ends in 2 days"
-Day 14: Auto-downgrade to free tier
-Day 14+: Targeted messaging about what they're missing
-```
-
-### Loss Aversion Messaging Sequence
-
-| Day | Message | Psychological lever |
-|-----|---------|-------------------|
-| Day 12 | "You've used [feature X] 23 times this week. In 2 days, you'll lose access." | Quantified loss |
-| Day 14 | "Your VIP access has ended. Here's what changed:" + specific feature list | Concrete deprivation |
-| Day 16 | "Your team's [data/projects/workflows] are still safe. Upgrade to keep building." | Sunk cost + safety |
-| Day 21 | "87% of users who tried VIP upgraded within 30 days. Join them?" | Social proof |
-| Day 30 | "Last chance: reactivate VIP at 40% off (24 hours only)" | Scarcity + discount |
-
-### Implementation Keys
-- Always show usage metrics during the trial ("You've saved 14 hours this week")
-- The downgrade must be noticeable but not destructive (never delete their data)
-- Highlight 2-3 specific premium features they used most in the downgrade email
-- Keep core functionality free enough that they stay on the platform (not churn entirely)
-
-## Referral Loops
-
-### Double-Sided Referral Program
-
-Both referrer and referee get value. This is non-negotiable -- single-sided referrals have 60% lower participation.
-
-```
-Referrer shares unique link
-  → Referee signs up + completes qualifying action
-    → Both receive reward simultaneously
-      → Referee becomes referrer (loop continues)
-```
-
-### Reward Structures That Work
-
-| Reward Type | Best for | Example |
-|-------------|----------|---------|
-| Credit/discount | SaaS, subscriptions | "Give $20, get $20" |
-| Extended trial | Freemium products | "Both get 1 extra month free" |
-| Feature unlock | Feature-gated products | "Both unlock premium templates" |
-| Cash/gift card | High-ticket products | "Earn $50 for every referral" |
-| Status/badge | Community products | "Founding member badge" |
-
-### Viral Coefficient Math
-
-```
-K-factor = invitations_sent_per_user x conversion_rate_of_invitations
-
-K = 1.0 → Sustainable (each user brings exactly 1 new user)
-K > 1.0 → Viral growth (exponential)
-K < 1.0 → Needs paid acquisition to grow (most products)
-```
-
-**Realistic targets:**
-- K = 0.1-0.3 is normal for B2B SaaS
-- K = 0.3-0.7 is good for consumer products
-- K > 1.0 is rare and usually temporary (launch virality)
-
-### Increasing K-Factor
-1. **Reduce friction**: Pre-filled referral messages, 1-click sharing
-2. **Increase motivation**: Higher rewards, gamification (leaderboard)
-3. **Multiply touchpoints**: In-app prompts, email signatures, sharing after key moments
-4. **Time it right**: Ask for referrals after the "aha moment," not at signup
-
-## GEO (Generative Engine Optimization)
-
-GEO is SEO's evolution for the AI era. When users ask ChatGPT/Claude/Gemini for recommendations, your product needs to appear in the generated answer.
-
-### GEO vs Traditional SEO
-
-| Dimension | SEO | GEO |
-|-----------|-----|-----|
-| Target | Google SERP rankings | AI-generated answers |
-| Content format | Blog posts, landing pages | Structured data, Q&A, cited statistics |
-| Key metric | Rankings, organic traffic | AI citations, recommendation rate |
-| Update cycle | Weeks to months | Real-time (based on training data + retrieval) |
-| Competition | Page 1 rankings | Being in the AI's knowledge base |
-
-### GEO Tactics
-
-1. **Q&A Schema Markup**: Structure content as explicit questions and answers
-2. **Cited Statistics**: "According to [Source], X% of Y..." -- AI models love citable numbers
-3. **Comparison Pages**: "X vs Y" pages are frequently retrieved by AI for recommendation queries
-4. **Structured Lists**: "Top 10 tools for X" -- format that AI can easily parse and cite
-5. **Entity Definition**: Clearly define what your product is in the first paragraph (AI needs category context)
-6. **Programmatic Landing Pages**: Generate pages for every "[category] for [use case]" permutation
-
-### Content That Gets Cited by AI
-
-- Statistics with sources: "Companies using X see 34% higher retention (Source: 2025 SaaS Benchmark Report)"
-- Clear product positioning: "[Product] is a [category] that [key differentiator]"
-- Comparison frameworks: structured tables comparing features across competitors
-- How-to guides with numbered steps (AI retrieves step-by-step content well)
-- Glossary/definition pages (AI uses these for background context)
-
-## PQL (Product-Qualified Lead) Scoring
-
-### What Makes a PQL
-
-A PQL is a user whose product behavior indicates they are likely to convert to paid. PQLs convert 5-10x better than MQLs.
-
-### Scoring Model
-
-```
-PQL Score = Engagement Score + Feature Usage Score + Profile Score
-
-Engagement Score (0-40 points):
-  - Login frequency: daily=10, weekly=5, monthly=1
-  - Session duration: >10min=10, 5-10min=5, <5min=1
-  - Days active in last 14: 10+=10, 5-9=5, 1-4=2
-  - Feature breadth (unique features used): 5+=10, 3-4=5, 1-2=2
-
-Feature Usage Score (0-40 points):
-  - Used premium feature (during trial): +15
-  - Hit usage limit: +10
-  - Created/uploaded content: +10
-  - Invited team member: +15
-  - Integrated with another tool: +10
-  - Used API: +10
-
-Profile Score (0-20 points):
-  - Company size matches ICP: +10
-  - Role matches buyer persona: +5
-  - Geography matches target market: +5
-```
-
-### PQL Thresholds
-
-| Score | Classification | Action |
-|-------|---------------|--------|
-| 70-100 | Hot PQL | Sales outreach within 24 hours |
-| 40-69 | Warm PQL | Automated upgrade nudge sequence |
-| 20-39 | Engaged free user | Product education emails |
-| 0-19 | Dormant | Re-engagement campaign or ignore |
-
-## Tactic Categories Overview (130+)
-
-The full atlas covers these major categories:
-
-1. **Demand Generation** (22 tactics): Content marketing, paid acquisition, community building, events, partnerships
-2. **Lead Capture** (15 tactics): Landing pages, lead magnets, chatbots, exit intent, content gates
-3. **Nurture & Education** (18 tactics): Email sequences, webinars, case studies, drip campaigns, retargeting
-4. **Conversion** (20 tactics): Free trials, demos, reverse trials, pricing psychology, social proof
-5. **Onboarding** (12 tactics): Product tours, activation checklists, milestone celebrations, personal onboarding calls
-6. **Expansion** (15 tactics): Upsell triggers, usage-based prompts, seat expansion, cross-sell recommendations
-7. **Retention** (14 tactics): Health scores, QBRs, NPS programs, feature adoption campaigns, win-back flows
-8. **Advocacy & Virality** (16 tactics): Referral programs, case studies, community champions, user-generated content, affiliate programs
-9. **Data & Measurement** (10 tactics): Attribution models, cohort analysis, LTV prediction, experimentation frameworks
-
-Each category contains specific, implementable tactics with examples, benchmarks, and tool recommendations. See the individual rules files for deep dives on the most impactful tactics.
+See `rules/` for deep dives on the most impactful categories:
+- `signal-based-selling.md` — Signal hierarchy, trigger workflows, Clay/enrichment patterns
+- `reverse-trial.md` — Loss aversion mechanics, messaging sequences, PQL scoring
+- `referral-loops.md` — K-factor math, 5 loop types, NPS-to-referral conversion
+- `geo-seo.md` — GEO tactics, programmatic SEO, AI citation optimization

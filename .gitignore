@@ -1,0 +1,12 @@
+# Session transcripts (may contain API keys and tokens)
+*.txt
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
