@@ -10,3 +10,6 @@ node_modules/
 # IDE
 .vscode/
 .idea/
+
+# Tribe v2 model cache (large binary files, ~2-4GB)
+.gtm/models/
