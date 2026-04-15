@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "gtm-engineering-command-center",
-  "version": "1.0.0",
-  "description": "Autonomous GTM operating system. 12 agents, 19 commands, 13 skills, 4 cloud routines. Multichannel orchestration (Meta + Google + Email + SEO + Landing Pages + Outreach + Referral), AARRR funnel diagnostics, cross-channel attribution, codebase-aware asset generation, and always-on optimization via Claude Code Routines.",
+  "version": "1.1.0",
+  "description": "Autonomous GTM operating system. 14 agents, 21 commands, 15 skills, 4 cloud routines. Multichannel orchestration, AARRR funnel diagnostics, Tribe v2 neural pre-testing for creatives, browser QA (Playwright + Computer Use), cross-channel attribution, codebase-aware asset generation, and always-on optimization via Claude Code Routines.",
   "owner": {
     "name": "Dojo Coding Labs",
     "email": "team@dojocoding.io"
@@ -10,8 +10,8 @@
   "plugins": [
     {
       "name": "gtm-engineering-command-center",
-      "description": "Autonomous GTM Command Center — 10 slash commands, 5 specialized agents, 5 skills with 17 rules. Media planning, ad creative generation (Nano Banana 2), Meta Ads deployment (Graph API), PostHog analytics dashboards, self-learning loops, community intelligence scraping, and Remotion animated ads.",
-      "version": "1.0.0",
+      "description": "Autonomous GTM operating system — 14 agents, 21 commands, 15 skills. Multichannel orchestration, AARRR funnel diagnostics, Tribe v2 neural pre-testing, browser QA, cross-channel attribution, codebase-aware asset generation, and cloud Routines.",
+      "version": "1.1.0",
       "author": {
         "name": "Dojo Coding Labs",
         "email": "team@dojocoding.io"

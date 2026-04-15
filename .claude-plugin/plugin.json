@@ -1,7 +1,7 @@
 {
   "name": "gtm-engineering-command-center",
-  "version": "1.0.0",
-  "description": "Autonomous GTM operating system — multichannel orchestration (Meta, Google, Email, SEO, Landing Pages, Outreach, Referral), AARRR funnel diagnostics, cross-channel attribution, codebase-aware asset generation, Routines for always-on optimization. Claude Code as your autonomous growth engine.",
+  "version": "1.1.0",
+  "description": "Autonomous GTM operating system — multichannel orchestration, AARRR funnel diagnostics, Tribe v2 neural pre-testing, browser QA (Playwright + Computer Use), cross-channel attribution, codebase-aware asset generation, and Routines for always-on optimization. 14 agents, 21 commands, 15 skills.",
   "author": {
     "name": "Dojo Coding Labs",
     "email": "team@dojocoding.io"
