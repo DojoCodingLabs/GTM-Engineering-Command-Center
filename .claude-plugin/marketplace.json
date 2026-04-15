@@ -1,0 +1,43 @@
+{
+  "name": "gtm-engineering-command-center",
+  "display_name": "GTM Engineering Command Center",
+  "version": "0.1.0",
+  "description": "Turn Claude Code into your autonomous GTM engineer. Plan media buys, generate ad creatives with Nano Banana 2 (Gemini), deploy campaigns via Meta Ads API, analyze metrics with PostHog, and run self-learning optimization loops — all from your terminal.",
+  "category": "marketing",
+  "keywords": [
+    "gtm",
+    "growth",
+    "meta-ads",
+    "facebook-ads",
+    "instagram-ads",
+    "posthog",
+    "analytics",
+    "media-buying",
+    "creative-generation",
+    "nano-banana",
+    "gemini",
+    "direct-response",
+    "campaign-automation",
+    "claude-code",
+    "claude-code-plugin",
+    "dojo-coding",
+    "open-source"
+  ],
+  "author": {
+    "name": "Dojo Coding Labs",
+    "email": "team@dojocoding.io",
+    "url": "https://dojocoding.io"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DojoCodingLabs/GTM-Engineering-Command-Center"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/DojoCodingLabs/GTM-Engineering-Command-Center",
+  "bugs": {
+    "url": "https://github.com/DojoCodingLabs/GTM-Engineering-Command-Center/issues"
+  },
+  "icon": "rocket",
+  "screenshots": [],
+  "min_claude_code_version": "1.0.0"
+}

@@ -1,0 +1,10 @@
+# Secrets - never commit
+config.json
+
+# Large binary files
+creatives/*.png
+creatives/*.jpg
+creatives/**/*.png
+creatives/**/*.jpg
+
+# Everything else is safe to commit

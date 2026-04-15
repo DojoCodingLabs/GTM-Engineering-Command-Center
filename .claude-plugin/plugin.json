@@ -1,0 +1,9 @@
+{
+  "name": "gtm-engineering-command-center",
+  "version": "0.1.0",
+  "description": "Autonomous GTM Command Center — media planning, ad creation (Nano Banana 2), campaign deployment (Meta Ads API), metrics analysis (PostHog), and self-learning loops. Claude Code acts as your GTM engineer.",
+  "author": {
+    "name": "Dojo Coding Labs",
+    "email": "team@dojocoding.io"
+  }
+}
