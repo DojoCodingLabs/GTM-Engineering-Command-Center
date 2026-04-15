@@ -1,30 +1,31 @@
 ---
 name: gtm-metrics
-description: "Pull and analyze campaign metrics from Meta + PostHog"
-argument-hint: ""
+description: "Pull and analyze metrics from Meta, Stripe, Email, SEO, and Google Ads"
+argument-hint: "--auto (for routine mode) or channel (meta/stripe/email/seo/google/all)"
 ---
 
-# Metrics Analysis Command
+# Unified Metrics Analysis Command
 
-You are the data-analyst agent. You will pull campaign performance data from Meta Ads and PostHog, cross-reference attribution, identify winners and losers, and generate actionable optimization recommendations.
+You are the data-analyst agent. You will pull performance data from all configured channels -- Meta Ads, Stripe, email provider, SEO/organic, and Google Ads -- cross-reference attribution, build a unified dashboard, and generate optimization recommendations.
 
 ## Phase 0: Pre-Flight Check
 
 1. Read `.gtm/config.json` in the project root.
    - If the file does not exist, tell the user: "GTM Command Center is not set up. Run `/gtm-setup` first." Then STOP.
-2. Validate required credentials:
-   - `meta.access_token` — required for Meta Ads insights
-   - `meta.ad_account_id` — required
-   - `posthog.personal_api_key` — required for PostHog analytics (warn if missing, continue with Meta-only)
-   - `posthog.project_id` — required for PostHog
-   - `posthog.host` — required for PostHog API calls
-3. Test Meta access token:
-   - GET `https://graph.facebook.com/{api_version}/me?access_token={token}`
-   - If expired, tell the user to refresh and STOP.
-4. Load existing deployment records from `.gtm/campaigns/` to know which campaigns to query.
-   - If no deployment records exist, query the ad account directly for all active/recent campaigns.
+2. Determine which data sources are configured:
+   - `meta.access_token` + `meta.ad_account_id` -> Meta Ads insights available
+   - `posthog.personal_api_key` + `posthog.project_id` -> PostHog analytics available
+   - `stripe.secret_key` -> Stripe revenue data available
+   - `email.api_key` + `email.provider` -> Email metrics available
+   - `google_ads.customer_id` -> Google Ads insights available
+3. Test each configured API's connectivity.
+4. If `--auto` flag is present (routine mode): skip interactive prompts, pull all available data, save snapshot, check thresholds, and output alerts only.
+5. Load existing deployment records from `.gtm/campaigns/` to know which campaigns to query.
+   - If no deployment records exist, query accounts directly for all active/recent campaigns.
 
 ## Phase 1: Pull Meta Ads Insights
+
+If Meta Ads is configured:
 
 ### 1.1: Account-Level Overview
 
@@ -46,227 +47,288 @@ GET https://graph.facebook.com/{api_version}/{ad_account_id}/insights
   &access_token={token}
 ```
 
-### 1.3: Ad Set-Level Breakdown
+### 1.3: Ad Set and Ad Level Breakdowns
 
-For each campaign of interest:
-```
-GET https://graph.facebook.com/{api_version}/{campaign_id}/insights
-  ?fields=adset_id,adset_name,spend,impressions,clicks,cpc,cpm,ctr,actions,cost_per_action_type,frequency
-  &level=adset
-  &date_preset=last_7d
-  &access_token={token}
-```
+Pull per-campaign ad set and ad level metrics for detailed analysis.
 
-### 1.4: Ad-Level Breakdown
+### 1.4: Parse Actions
 
-```
-GET https://graph.facebook.com/{api_version}/{campaign_id}/insights
-  ?fields=ad_id,ad_name,spend,impressions,clicks,cpc,cpm,ctr,actions,cost_per_action_type
-  &level=ad
-  &date_preset=last_7d
-  &access_token={token}
-```
-
-### 1.5: Parse Actions
-
-Meta returns actions as an array of `{action_type, value}` objects. Extract:
-- `link_click` — link clicks
-- `landing_page_view` — actual page loads
-- `lead` — leads (if objective is lead gen)
-- `purchase` — purchases (if objective is sales)
-- `offsite_conversion.fb_pixel_lead` — pixel-tracked leads
-- `offsite_conversion.fb_pixel_purchase` — pixel-tracked purchases
-- `app_custom_event.*` — custom conversion events
+Extract from Meta's action arrays:
+- `link_click`, `landing_page_view`, `lead`, `purchase`
+- `offsite_conversion.fb_pixel_lead`, `offsite_conversion.fb_pixel_purchase`
 
 Calculate derived metrics:
-- **CPA** = spend / conversions (for the target action type)
-- **ROAS** = revenue / spend (if purchase value available)
+- **CPA** = spend / conversions
+- **ROAS** = revenue / spend
 - **Landing Page View Rate** = landing_page_views / clicks
 - **Conversion Rate** = conversions / landing_page_views
 
-## Phase 2: Pull PostHog Analytics
+## Phase 2: Pull Stripe Revenue Data
 
-If PostHog credentials are configured:
+If Stripe is configured:
 
-### 2.1: Event Counts
+### 2.1: MRR Calculation
 
-Use the PostHog API or PostHog MCP tools to query:
+Query Stripe API for active subscriptions:
+- List all active subscriptions
+- Sum monthly recurring revenue
+- Calculate MRR growth vs. previous period
 
+### 2.2: Churn Rate
+
+- Count subscriptions canceled in the period
+- Calculate monthly churn rate: canceled / active at period start
+- Calculate revenue churn: lost MRR / starting MRR
+
+### 2.3: LTV Estimation
+
+- Average revenue per user (ARPU): MRR / active subscribers
+- Estimated LTV: ARPU / monthly churn rate
+- LTV:CAC ratio: LTV / CPA (from Meta or blended)
+
+### 2.4: New Revenue Attribution
+
+- New customers in the period
+- Revenue from new customers
+- Revenue from existing customers (upgrades, expansions)
+- Refunds and disputes
+
+Present Stripe metrics:
 ```
-POST {posthog_host}/api/projects/{project_id}/query
-Headers:
-  Authorization: Bearer {personal_api_key}
-Body:
-{
-  "query": {
-    "kind": "EventsQuery",
-    "select": ["event", "count()"],
-    "where": ["timestamp >= now() - interval 7 day"],
-    "groupBy": ["event"],
-    "orderBy": ["count() DESC"]
-  }
-}
-```
+Stripe Revenue Metrics (last 7 days):
 
-Focus on key events:
-- `$pageview` (with UTM filters for Meta traffic)
-- Signup events (`user_signed_up`, `sign_up`, or custom)
-- Purchase events (`purchase`, `checkout_completed`, or custom)
-- Any custom conversion events
-
-### 2.2: UTM-Filtered Funnel
-
-Query pageviews and conversions filtered by `utm_source=meta`:
-```
-Filter: properties.$utm_source = "meta"
-```
-
-This gives the PostHog view of Meta-attributed traffic, independent of Meta's pixel attribution.
-
-### 2.3: Funnel Conversion Rate
-
-If funnel steps are known (landing page → signup → activation → purchase):
-- Query each step filtered by Meta UTM parameters
-- Calculate step-by-step drop-off rates
-
-## Phase 3: Cross-Reference Attribution
-
-Compare Meta's reported conversions with PostHog's:
-
-```
-| Metric          | Meta Reports | PostHog Reports | Delta |
-|-----------------|-------------|-----------------|-------|
-| Link Clicks     | {X}         | Pageviews: {Y}  | {diff}|
-| Conversions     | {X}         | Signups: {Y}    | {diff}|
-| Conv. Rate      | {X%}        | {Y%}            | {diff}|
+| Metric | Value | vs. Last Week |
+|--------|-------|---------------|
+| MRR | $X | {+/-}% |
+| New Customers | {N} | {+/-}% |
+| Churn Rate | X% | {+/-}pp |
+| ARPU | $X | {+/-}% |
+| LTV | $X | {+/-}% |
+| LTV:CAC | X:1 | {+/-} |
+| Net Revenue | $X | {+/-}% |
 ```
 
-Common discrepancies and explanations:
-- Meta over-reports: Attribution window (7-day click, 1-day view) vs. PostHog's last-touch
-- PostHog under-reports: Ad blockers preventing PostHog from loading
-- Click vs. pageview gap: Slow landing page or bot traffic
+## Phase 3: Pull Email Metrics
 
-## Phase 4: Winner/Loser Analysis
+If an email provider is configured:
 
-### 4.1: Identify Winners
+### 3.1: Provider-Specific Metrics
 
-Rank all ads/ad sets by the primary KPI (CPA for conversions, CTR for traffic):
+**Resend**: Query Resend API for email stats:
+- Sent, delivered, opened, clicked, bounced
+- Per-email and per-sequence performance
 
-**Top Performers** (best 20%):
-- Which creative angle is winning?
-- Which audience segment has the lowest CPA?
-- Which placement is most efficient?
+**SendGrid**: Query SendGrid Stats API:
+- Delivered, opens, clicks, bounces, unsubscribes
+- Engagement rates by campaign/automation
 
-**Bottom Performers** (worst 20%):
-- Which ads are spending without converting?
-- Which audiences have the highest CPA?
-- Are there ad sets still in learning phase?
+**Postmark**: Query Postmark Stats API:
+- Similar metrics per message stream
 
-### 4.2: Statistical Significance
+### 3.2: Email Performance Summary
 
-For comparison of ad variations:
-- Calculate if the difference is statistically significant (need ~100+ conversions for reliable data)
-- If still in learning phase (<50 optimization events), note: "Insufficient data — wait {X} more days before making decisions."
+```
+Email Metrics (last 7 days):
 
-### 4.3: Creative Fatigue Check
+| Sequence | Sent | Delivered | Opened | Clicked | Conv |
+|----------|------|-----------|--------|---------|------|
+| Welcome | {N} | {N} ({%}) | {N} ({%}) | {N} ({%}) | {N} ({%}) |
+| Activation | {N} | {N} ({%}) | {N} ({%}) | {N} ({%}) | {N} ({%}) |
+| Retention | {N} | {N} ({%}) | {N} ({%}) | {N} ({%}) | {N} ({%}) |
 
-Look for signs of creative fatigue:
-- Frequency > 3.0 (same person seeing ad 3+ times)
-- CTR declining over the period
-- CPA increasing while spend is stable
+Overall:
+  Open Rate: {X}% (industry avg: 20-30%)
+  Click Rate: {X}% (industry avg: 2-5%)
+  Unsubscribe Rate: {X}% (should be <0.5%)
+```
 
-## Phase 5: Optimization Recommendations
+## Phase 4: Pull SEO/Organic Metrics
 
-Based on the analysis, generate specific, actionable recommendations:
+If PostHog or Google Search Console data is available:
 
-### Budget Recommendations
-- "Increase budget on Ad Set X by Y% — it has the lowest CPA at $Z"
-- "Decrease budget on Ad Set X — CPA is 3x above target"
-- "Kill Ad Y — $X spent with 0 conversions"
+### 4.1: Organic Traffic
 
-### Creative Recommendations
-- "The {angle} creative is winning — create more variations of this angle"
-- "Ad creative fatigue detected on {ad} (frequency: X). Rotate new creatives."
-- "Test video creative — image-only ads show declining CTR"
+Query PostHog for non-paid traffic:
+- Filter: `$utm_source != "meta"` AND `$utm_source != "google_ads"`
+- Pageviews, unique visitors, sessions
+- Top landing pages by organic traffic
 
-### Targeting Recommendations
-- "Narrow age range on Ad Set X to {range} — that segment converts best"
-- "Expand to lookalike audiences based on {X} converters"
-- "Exclude {audience} — high impressions but zero conversions"
+### 4.2: Search Performance (if GSC configured)
 
-### Technical Recommendations
-- "Landing page view rate is low (X%) — check page load speed"
-- "Meta/PostHog attribution gap is large (X%) — verify pixel is firing correctly"
-- "High bounce rate from Meta traffic — review landing page relevance to ad messaging"
+If Google Search Console API access is available:
+- Total impressions, clicks, average position
+- Top queries by clicks
+- Top pages by clicks
+- Click-through rate from search
 
-## Phase 6: Save Metrics Snapshot
+### 4.3: SEO Content Performance
 
-Save the complete metrics data to `.gtm/metrics/snapshot-{YYYY-MM-DD}.json`:
+If `.gtm/seo/content/` was deployed:
+- Track page views for each SEO content piece
+- Compare to pre-deployment baseline (if available)
+
+Present:
+```
+SEO/Organic Metrics (last 7 days):
+
+| Metric | Value | vs. Last Week |
+|--------|-------|---------------|
+| Organic Visitors | {N} | {+/-}% |
+| Top Organic Page | {page} | {N} views |
+| Avg. Time on Page | {X}s | {+/-}% |
+| Organic Conversions | {N} | {+/-}% |
+```
+
+## Phase 5: Pull Google Ads Metrics
+
+If Google Ads is configured:
+
+- Campaign-level spend, impressions, clicks, conversions
+- Search term report (top converting keywords)
+- Quality Score distribution
+- CPC, CPA, ROAS
+
+## Phase 6: Pull PostHog Analytics
+
+If PostHog is configured:
+
+### 6.1: Event Counts
+
+Query PostHog for key events:
+- Pageviews (with UTM filters for each paid channel)
+- Signup events
+- Purchase/upgrade events
+- Custom conversion events
+
+### 6.2: UTM-Filtered Funnels
+
+For each paid channel, query the full funnel:
+```
+Ad Click -> Page View -> Signup -> Activation -> Purchase
+```
+
+Calculate step-by-step conversion rates per channel.
+
+### 6.3: Cross-Channel Attribution
+
+Compare each channel's reported conversions with PostHog's first-party data.
+
+## Phase 7: Unified Dashboard
+
+Combine all data sources into a single dashboard view:
+
+```
+GTM Unified Dashboard -- {date range}
+
+REVENUE:  ${mrr}/mo MRR  |  {N} new customers  |  {X}% churn
+SPEND:    ${total} across all channels
+BLENDED:  ${cpa} CPA  |  {X}x ROAS
+
+Cross-Channel Performance:
+| Channel | Spend | Impressions | Clicks | Conv | CPA | Revenue | ROAS |
+|---------|-------|-------------|--------|------|-----|---------|------|
+| Meta Ads | ${X} | {N} | {N} | {N} | ${X} | ${X} | {X}x |
+| Google Ads | ${X} | {N} | {N} | {N} | ${X} | ${X} | {X}x |
+| Email | $0 | -- | {N} clicks | {N} | $0 | ${X} | -- |
+| Organic/SEO | $0 | {N} | {N} | {N} | $0 | ${X} | -- |
+| Direct | $0 | -- | -- | {N} | $0 | ${X} | -- |
+| TOTAL | ${X} | {N} | {N} | {N} | ${X} | ${X} | {X}x |
+
+Cross-Channel Attribution:
+| Metric | Meta Reports | Google Reports | PostHog (first-party) | Delta |
+|--------|-------------|----------------|----------------------|-------|
+| Conversions | {X} | {X} | {X} | {diff} |
+| Revenue | ${X} | ${X} | ${X} (Stripe) | {diff} |
+
+Top Performer: {channel} -- CPA ${X}, ROAS {X}x
+Worst Performer: {channel} -- CPA ${X}, ROAS {X}x
+```
+
+### 7.1: Winner/Loser Analysis
+
+Rank all ads/ad sets/emails by primary KPI. Identify:
+- **Top 20%**: Scale these
+- **Bottom 20%**: Kill or rotate these
+- **Creative fatigue signals**: Frequency >3.0, declining CTR, rising CPA
+
+### 7.2: Optimization Recommendations
+
+Generate channel-specific and cross-channel recommendations:
+
+**Budget Recommendations**:
+- Shift budget toward highest-ROAS channel
+- Kill underperforming campaigns/sequences
+
+**Creative Recommendations**:
+- Winning angles to scale
+- Fatigued creatives to replace
+
+**Channel-Specific**:
+- Meta: targeting, placement, bid adjustments
+- Email: subject line, send time, sequence length
+- SEO: content updates, new keyword targets
+- Outreach: reply rate improvements
+
+## Phase 8: Save Metrics Snapshot
+
+Save the unified metrics to `.gtm/metrics/snapshot-{YYYY-MM-DD}.json`:
 
 ```json
 {
   "date": "{ISO date}",
   "period": "last_7d",
-  "meta": {
-    "account_spend": {total},
-    "campaigns": [
-      {
-        "id": "{id}",
-        "name": "{name}",
-        "spend": {amount},
-        "impressions": {count},
-        "clicks": {count},
-        "cpm": {value},
-        "cpc": {value},
-        "ctr": {value},
-        "conversions": {count},
-        "cpa": {value},
-        "ad_sets": [...]
-      }
-    ]
+  "meta": { "spend": 0, "campaigns": [...] },
+  "stripe": { "mrr": 0, "churn_rate": 0, "new_customers": 0, "ltv": 0 },
+  "email": { "sent": 0, "opened": 0, "clicked": 0, "converted": 0 },
+  "seo": { "organic_visitors": 0, "organic_conversions": 0 },
+  "google_ads": { "spend": 0, "conversions": 0 },
+  "posthog": { "meta_pageviews": 0, "meta_signups": 0, "funnel_rates": {} },
+  "unified": {
+    "total_spend": 0,
+    "total_conversions": 0,
+    "blended_cpa": 0,
+    "total_revenue": 0,
+    "blended_roas": 0
   },
-  "posthog": {
-    "meta_pageviews": {count},
-    "meta_signups": {count},
-    "meta_purchases": {count},
-    "funnel_rates": {...}
-  },
-  "attribution_comparison": {...},
-  "recommendations": ["{list of recommendations}"]
+  "attribution_comparison": {},
+  "recommendations": []
 }
 ```
 
-If a snapshot for today already exists, append a counter: `snapshot-{YYYY-MM-DD}-02.json`
+## Phase 9: Threshold Check (Auto Mode)
 
-## Phase 7: Dashboard Output
+If `--auto` flag is present, check these thresholds against 7-day averages:
 
-Present findings in a clear dashboard format:
+| Metric | Threshold | Action |
+|--------|-----------|--------|
+| CPA increase | >30% vs. 7d avg | ALERT |
+| CTR decrease | >25% vs. 7d avg | ALERT |
+| Daily spend | >20% over budget | ALERT |
+| Email bounce rate | >5% | ALERT |
+| Churn rate | >2x monthly avg | ALERT |
+| Campaign auto-paused | Any | ALERT |
+
+Save alerts to `.gtm/routines/alerts/alert-{YYYY-MM-DD}.json`.
+
+## Output
 
 ```
-GTM Metrics Dashboard — {date range}
+GTM Metrics Dashboard -- {date range}
 
-SPEND: ${total}  |  IMPRESSIONS: {X}  |  CLICKS: {X}  |  CONVERSIONS: {X}
-
-| Campaign | Spend | CPM | CPC | CTR | Conv | CPA | Status |
-|----------|-------|-----|-----|-----|------|-----|--------|
-| {name}   | ${X}  | ${X}| ${X}| X%  | {X}  | ${X}| {rec}  |
-
-Top Performer: {ad/adset name} — CPA ${X}
-Worst Performer: {ad/adset name} — CPA ${X}
-
-Key Recommendations:
-1. {recommendation}
-2. {recommendation}
-3. {recommendation}
+{Unified dashboard from Phase 7}
 
 Snapshot saved: .gtm/metrics/snapshot-{date}.json
+{Alerts if any}
+
 Next: Run /gtm-learn to save insights, or /gtm-report for a full weekly report.
 ```
 
 ## Error Handling
 
 - **Meta token expired**: Detect error code 190, prompt for new token, STOP.
-- **Meta rate limiting**: If error code 17 or 4, wait and retry (up to 3 times with backoff: 30s, 60s, 120s).
-- **PostHog unavailable**: Continue with Meta-only data. Clearly note: "PostHog data unavailable — showing Meta-only metrics. Cross-attribution analysis skipped."
-- **No campaign data**: If no campaigns have run or all are paused with zero spend, report: "No active campaigns with spend data found. Deploy a campaign with `/gtm-deploy` first."
-- **Incomplete data**: If some metrics are missing (e.g. no conversion tracking), note which metrics are unavailable and why (likely pixel not configured for that event).
+- **Meta rate limiting**: Wait and retry with backoff (30s, 60s, 120s).
+- **Stripe unavailable**: Continue without revenue data. Note: "Stripe data unavailable."
+- **Email provider unavailable**: Continue without email data. Note gap.
+- **PostHog unavailable**: Continue with channel-native data only. Note: "PostHog data unavailable -- cross-attribution skipped."
+- **No campaign data**: Report: "No active campaigns with spend found."
+- **Auto mode errors**: Log errors but do not stop. Report partial data with gaps noted.

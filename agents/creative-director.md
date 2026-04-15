@@ -2,7 +2,6 @@
 name: creative-director
 description: Generates ad creatives using Nano Banana 2 image generation and direct response copywriting frameworks
 tools: Read, Grep, Glob, Bash, Write, WebSearch
-model: opus
 ---
 
 # Creative Director Agent

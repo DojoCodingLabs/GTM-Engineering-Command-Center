@@ -1,8 +1,7 @@
 ---
 name: campaign-operator
-description: Deploys campaigns to Meta Ads via Graph API with battle-tested safety rules
+description: Deploys campaigns to Meta Ads, Google Ads, and email channels via APIs with battle-tested safety rules
 tools: Read, Bash, Write, Grep, Glob
-model: opus
 ---
 
 # Campaign Operator Agent
@@ -372,3 +371,223 @@ If ANY of these checks fail, do NOT proceed with deployment. Report the specific
 8. **ALWAYS verify deployment** with GET requests after creation. Trust but verify.
 9. **ALWAYS use the latest Graph API version** (v22.0 as of this writing). Check `.gtm/strategies/` for any Meta API version updates.
 10. **Log everything.** If something fails, the logs in the campaign JSON should tell us exactly what happened.
+
+## Multichannel Deployment
+
+When a campaign plan specifies channels beyond Meta Ads, use this section to deploy to Google Ads and email campaigns.
+
+### Channel Routing Logic
+
+When reading a campaign plan from `.gtm/plans/`, determine the deployment channel(s):
+
+```
+1. Read the plan file
+2. Check the "Channel" or "Platform" field
+3. Route to the correct deployment workflow:
+   - "meta" or "facebook" or "instagram" → Use the Meta Ads workflow above
+   - "google" or "search" or "display" or "youtube" → Use the Google Ads workflow below
+   - "email" or "drip" or "sequence" → Use the Email Campaign workflow below
+   - "multi" or "cross-channel" → Deploy to ALL specified channels sequentially
+4. For cross-channel: deploy Meta first, then Google, then Email
+   (Meta is fastest to go live, Google needs review, Email is immediate)
+```
+
+### Google Ads Deployment
+
+**Prerequisites:**
+- Google Ads API access (OAuth2 credentials or Google Ads API developer token)
+- Customer ID (the 10-digit Google Ads account number, formatted as XXX-XXX-XXXX)
+- Conversion tracking configured (Google Ads conversion ID + label)
+
+**Step 1: Create Campaign**
+
+Google Ads API uses a different structure than Meta. Use `google-ads-api` or REST calls:
+
+```bash
+# Create campaign via Google Ads REST API
+# Note: Google Ads API requires OAuth2, which is more complex than Meta's token auth
+# If using a service account or existing OAuth token:
+
+curl -s -X POST "https://googleads.googleapis.com/v17/customers/${CUSTOMER_ID}/campaigns:mutate" \
+  -H "Authorization: Bearer ${GOOGLE_ADS_TOKEN}" \
+  -H "developer-token: ${DEVELOPER_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "operations": [{
+      "create": {
+        "name": "'"${CAMPAIGN_NAME}"'",
+        "status": "PAUSED",
+        "advertisingChannelType": "SEARCH",
+        "biddingStrategy": {
+          "type": "MAXIMIZE_CONVERSIONS"
+        },
+        "campaignBudget": "customers/'"${CUSTOMER_ID}"'/campaignBudgets/'"${BUDGET_ID}"'"
+      }
+    }]
+  }' | jq .
+```
+
+**Step 2: Create Ad Group**
+
+```bash
+curl -s -X POST "https://googleads.googleapis.com/v17/customers/${CUSTOMER_ID}/adGroups:mutate" \
+  -H "Authorization: Bearer ${GOOGLE_ADS_TOKEN}" \
+  -H "developer-token: ${DEVELOPER_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "operations": [{
+      "create": {
+        "name": "'"${ADGROUP_NAME}"'",
+        "campaign": "customers/'"${CUSTOMER_ID}"'/campaigns/'"${CAMPAIGN_ID}"'",
+        "status": "PAUSED",
+        "type": "SEARCH_STANDARD"
+      }
+    }]
+  }' | jq .
+```
+
+**Step 3: Add Keywords**
+
+```bash
+curl -s -X POST "https://googleads.googleapis.com/v17/customers/${CUSTOMER_ID}/adGroupCriteria:mutate" \
+  -H "Authorization: Bearer ${GOOGLE_ADS_TOKEN}" \
+  -H "developer-token: ${DEVELOPER_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "operations": [{
+      "create": {
+        "adGroup": "customers/'"${CUSTOMER_ID}"'/adGroups/'"${ADGROUP_ID}"'",
+        "keyword": {
+          "text": "'"${KEYWORD}"'",
+          "matchType": "PHRASE"
+        },
+        "status": "ENABLED"
+      }
+    }]
+  }' | jq .
+```
+
+**Step 4: Create Responsive Search Ad**
+
+```bash
+curl -s -X POST "https://googleads.googleapis.com/v17/customers/${CUSTOMER_ID}/adGroupAds:mutate" \
+  -H "Authorization: Bearer ${GOOGLE_ADS_TOKEN}" \
+  -H "developer-token: ${DEVELOPER_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "operations": [{
+      "create": {
+        "adGroup": "customers/'"${CUSTOMER_ID}"'/adGroups/'"${ADGROUP_ID}"'",
+        "status": "PAUSED",
+        "ad": {
+          "responsiveSearchAd": {
+            "headlines": [
+              {"text": "HEADLINE_1"},
+              {"text": "HEADLINE_2"},
+              {"text": "HEADLINE_3"}
+            ],
+            "descriptions": [
+              {"text": "DESCRIPTION_1"},
+              {"text": "DESCRIPTION_2"}
+            ],
+            "finalUrls": ["https://example.com?utm_source=google&utm_medium=cpc&utm_campaign='"${CAMPAIGN_NAME}"'"]
+          }
+        }
+      }
+    }]
+  }' | jq .
+```
+
+**Google Ads Safety Rules:**
+- Everything PAUSED until human review (same as Meta)
+- Always set negative keywords to prevent wasted spend
+- Always include UTM parameters on final URLs
+- Verify conversion tracking is firing before activating campaigns
+- Google Ads has a review process (24-48 hours) -- campaigns do not go live immediately even when set to ACTIVE
+
+### Email Campaign Deployment
+
+For email drip sequences and one-off campaigns, route to the project's email provider.
+
+**Step 1: Read the email sequence from the plan**
+
+The campaign plan or `.gtm/sequences/` directory contains the email content, timing, and target audience.
+
+**Step 2: Determine the email provider from `.gtm/config.json`**
+
+Route to the correct API:
+
+**Resend Deployment:**
+```bash
+curl -s -X POST "https://api.resend.com/emails" \
+  -H "Authorization: Bearer ${RESEND_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "'"${FROM_NAME} <${FROM_EMAIL}>"'",
+    "to": ["'"${RECIPIENT_EMAIL}"'"],
+    "subject": "'"${SUBJECT}"'",
+    "html": "'"${HTML_CONTENT}"'",
+    "tags": [
+      {"name": "campaign", "value": "'"${CAMPAIGN_NAME}"'"},
+      {"name": "sequence", "value": "'"${SEQUENCE_NAME}"'"},
+      {"name": "email_number", "value": "'"${EMAIL_NUMBER}"'"}
+    ]
+  }' | jq .
+```
+
+**SendGrid Deployment:**
+```bash
+curl -s -X POST "https://api.sendgrid.com/v3/mail/send" \
+  -H "Authorization: Bearer ${SENDGRID_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "personalizations": [{
+      "to": [{"email": "'"${RECIPIENT_EMAIL}"'"}],
+      "custom_args": {
+        "campaign": "'"${CAMPAIGN_NAME}"'",
+        "sequence": "'"${SEQUENCE_NAME}"'"
+      }
+    }],
+    "from": {"email": "'"${FROM_EMAIL}"'", "name": "'"${FROM_NAME}"'"},
+    "subject": "'"${SUBJECT}"'",
+    "content": [{"type": "text/html", "value": "'"${HTML_CONTENT}"'"}],
+    "categories": ["'"${CAMPAIGN_NAME}"'", "lifecycle"]
+  }' | jq .
+```
+
+**Email Deployment Safety Rules:**
+- Never send to the full list on the first deployment. Start with a test batch of 10 recipients.
+- Verify sender domain has DKIM/SPF configured before sending.
+- All links must include UTM parameters: `utm_source=email&utm_medium=lifecycle&utm_campaign={name}`
+- Always include unsubscribe link in the footer.
+- Log every send with recipient, timestamp, subject, and sequence position.
+
+### Cross-Channel Deployment Record
+
+When deploying to multiple channels, save a unified campaign record to `.gtm/campaigns/{campaign-name}.json` that includes ALL channel IDs:
+
+```json
+{
+  "campaign_name": "Campaign Name",
+  "channels": {
+    "meta": {
+      "campaign_id": "120XXXXXXXXX",
+      "ad_sets": [],
+      "ads": []
+    },
+    "google": {
+      "campaign_id": "XXXXXXXXXX",
+      "ad_groups": [],
+      "ads": []
+    },
+    "email": {
+      "sequence_name": "welcome-sequence",
+      "emails_deployed": 3,
+      "provider": "resend"
+    }
+  },
+  "created_at": "2026-04-14T12:00:00Z",
+  "status": "PAUSED",
+  "plan_file": ".gtm/plans/campaign-name.md"
+}
+```

@@ -2,7 +2,6 @@
 name: growth-hacker
 description: Scrapes communities for GTM strategies, hacks, trends, and Meta API changes
 tools: WebSearch, WebFetch, Read, Write
-model: sonnet
 ---
 
 # Growth Hacker Agent

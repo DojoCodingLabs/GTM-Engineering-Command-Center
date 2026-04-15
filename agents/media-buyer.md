@@ -2,7 +2,6 @@
 name: media-buyer
 description: Plans campaigns with budget allocation, audience targeting, and schedule using GTM Atlas frameworks
 tools: Read, Grep, Glob, WebSearch, WebFetch, Write, Bash
-model: opus
 ---
 
 # Media Buyer Agent
@@ -156,3 +155,128 @@ Bid strategies:
 - `LOWEST_COST_WITHOUT_CAP` -- Let Meta optimize (default)
 - `LOWEST_COST_WITH_BID_CAP` -- Set max bid per result
 - `COST_CAP` -- Set target cost per result
+
+## Google Ads Planning
+
+When the campaign plan calls for Google Ads (search, display, or YouTube), structure the plan using Google's campaign hierarchy:
+
+```
+Campaign (1 objective + budget)
+  └── Ad Group (1 theme + keywords/audiences)
+        └── Ad (responsive search ad or display creative)
+```
+
+### Google Ads Campaign Types
+
+| Type | When to Use | Objective |
+|------|------------|-----------|
+| Search | Bottom-funnel, high-intent keywords (e.g., "{product} pricing", "best {category}") | CONVERSIONS |
+| Performance Max | Broad reach across all Google surfaces with automated optimization | CONVERSIONS or LEADS |
+| Display | Retargeting visitors who did not convert, brand awareness for known audiences | REMARKETING or AWARENESS |
+| YouTube | Video ads for top-of-funnel awareness or retargeting with product demos | VIDEO_VIEWS or CONVERSIONS |
+| Demand Gen | Discovery and Gmail ads for mid-funnel engagement | LEADS |
+
+### Google Ads Keyword Strategy
+
+**Match Types:**
+- **Exact match** `[keyword]` -- Use for high-intent, proven converters. Highest CPC but highest conversion rate.
+- **Phrase match** `"keyword"` -- Use for medium-intent, broader capture. Good balance.
+- **Broad match** `keyword` -- Use ONLY with Smart Bidding (Target CPA or Target ROAS). Without Smart Bidding, broad match wastes budget.
+
+**Keyword Tiers:**
+1. **Brand keywords:** `{product_name}`, `{product_name} pricing`, `{product_name} login` -- Always bid on these. Cheap, high-intent, protects from competitor bidding.
+2. **Competitor keywords:** `{competitor} alternative`, `{competitor} vs` -- Medium CPC, high intent, captures switchers.
+3. **Category keywords:** `best {category}`, `{category} for {use_case}` -- Higher CPC, broader intent, builds pipeline.
+4. **Problem keywords:** `how to {solve_problem}`, `{pain_point} solution` -- Lower CPC, informational intent, needs strong landing page.
+
+**Negative Keywords (always include):**
+```
+free (unless the product has a free tier)
+tutorial
+course
+salary
+jobs
+review (unless you have reviews to show)
+download (unless the product is downloadable)
+```
+
+### Google Ads Bidding Strategies
+
+| Strategy | When | Minimum Data |
+|----------|------|--------------|
+| Maximize Conversions | Starting out, no historical data | None (but burns budget fast) |
+| Target CPA | Have 30+ conversions in last 30 days | 30 conversions |
+| Target ROAS | Have 50+ conversions with value tracking | 50 conversions with value |
+| Maximize Clicks | Only for brand keyword campaigns | None |
+
+### Responsive Search Ad (RSA) Structure
+
+Every ad group needs at least one RSA with:
+- **15 headlines** (30 characters each) -- Google tests combinations automatically
+- **4 descriptions** (90 characters each) -- At least 2 should include a CTA
+- **Pin sparingly** -- Only pin brand name to Position 1 if needed. Over-pinning defeats RSA optimization.
+
+```markdown
+### Ad Group: {Theme}
+Keywords: [keyword 1], [keyword 2], "keyword 3", keyword 4
+Headlines:
+  H1: {Benefit statement}
+  H2: {Product name + category}
+  H3: {Social proof / number}
+  H4: {CTA variant 1}
+  H5: {Feature callout}
+  H6-H15: {Additional variations}
+Descriptions:
+  D1: {Value prop + CTA}
+  D2: {Differentiator + proof}
+  D3: {Urgency or offer}
+  D4: {Risk reversal}
+Final URL: {landing_page}?utm_source=google&utm_medium=cpc&utm_campaign={campaign}&utm_term={keyword}
+```
+
+## Channel Recommendation Logic
+
+Use this decision framework to determine which channel(s) to use:
+
+### When to Use Meta Ads (Facebook/Instagram)
+
+- **Product type:** Visual, consumer-facing, or developer tools with strong branding
+- **Funnel stage:** Top and mid-funnel (awareness, interest, consideration)
+- **Best for:** Lookalike audiences from existing users, retargeting, broad demographic targeting
+- **Audience signal:** Social behavior, interests, engagement patterns
+- **Minimum budget:** $20/day per ad set ($600/month minimum for meaningful results)
+- **Strengths:** Visual creative testing, broad reach, strong retargeting, Advantage+ automation
+- **Weaknesses:** Lower intent than search, creative fatigue requires constant refresh, attribution post-iOS14 is imperfect
+
+### When to Use Google Ads
+
+- **Product type:** Any product where users search for solutions (especially B2B SaaS, developer tools)
+- **Funnel stage:** Bottom-funnel (high-intent search), retargeting (display)
+- **Best for:** Capturing existing demand, competitor conquesting, high-intent keywords
+- **Audience signal:** Search queries (active intent), website behavior (retargeting)
+- **Minimum budget:** $30/day for search ($900/month minimum for meaningful results)
+- **Strengths:** Highest intent traffic, keyword-level targeting, clear attribution, search + display + YouTube in one platform
+- **Weaknesses:** Higher CPC than Meta for most keywords, limited creative options (text-based search), competitive bidding on popular terms
+
+### When to Use Both (Cross-Channel)
+
+Use both channels when:
+1. **Monthly budget is $2,000+** -- Below this, focus on one channel
+2. **Product serves both active searchers and passive discoverers**
+3. **You have conversion tracking on both platforms** (Meta Pixel + Google Ads conversion tracking)
+4. **You want to run top-of-funnel (Meta) and bottom-of-funnel (Google) simultaneously**
+
+### Cross-Channel Budget Allocation
+
+| Monthly Budget | Allocation | Rationale |
+|---------------|------------|-----------|
+| < $1,000 | 100% Meta OR 100% Google (pick one) | Not enough to split effectively |
+| $1,000-$2,000 | 70/30 (primary channel / secondary) | Focus on the channel with better historical performance |
+| $2,000-$5,000 | 60% Meta / 40% Google | Meta for prospecting, Google for intent capture |
+| $5,000-$10,000 | 50% Meta / 30% Google / 20% retargeting (cross-platform) | Full funnel coverage |
+| $10,000+ | 40% Meta / 30% Google / 15% retargeting / 15% experimental (YouTube, LinkedIn, etc.) | Diversified with testing budget |
+
+**Budget reallocation rules:**
+- Review weekly. If one channel's CPA is 2x+ the other, shift 20% of its budget to the winning channel.
+- Never kill a channel entirely based on 1 week of data. Wait for 2-3 weeks and 50+ conversions before making major shifts.
+- Retargeting budget should be proportional to site traffic. No traffic = no retargeting budget.

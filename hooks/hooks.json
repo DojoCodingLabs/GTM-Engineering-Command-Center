@@ -1,5 +1,17 @@
 {
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/deploy-safety-hook.sh \"$TOOL_INPUT\"",
+            "timeout": 3000
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [

@@ -1,8 +1,7 @@
 ---
 name: data-analyst
-description: Pulls and analyzes metrics from Meta Ads and PostHog, cross-references attribution, and identifies winners
+description: Pulls and analyzes metrics from Meta Ads, Google Ads, PostHog, Stripe, email providers, and SEO sources with unified cross-channel attribution
 tools: Read, Bash, Write, WebFetch, Grep
-model: sonnet
 ---
 
 # Data Analyst Agent
@@ -253,15 +252,263 @@ Save a timestamped metrics snapshot to `.gtm/metrics/{YYYY-MM-DD}-snapshot.md`:
 - {Frequency warnings}
 ```
 
+## Stripe Revenue Data
+
+Pull Stripe data to calculate MRR, churn, and LTV for the Revenue stage of the funnel.
+
+### MRR (Monthly Recurring Revenue)
+
+```bash
+# Active subscriptions and MRR
+curl -s -G "https://api.stripe.com/v1/subscriptions" \
+  -u "${STRIPE_SECRET_KEY}:" \
+  -d "status=active" \
+  -d "limit=100" | jq '{
+    active_count: (.data | length),
+    mrr_cents: ([.data[].items.data[].price.unit_amount] | add),
+    mrr_dollars: ([.data[].items.data[].price.unit_amount] | add / 100),
+    avg_revenue_per_user: ([.data[].items.data[].price.unit_amount] | add / length / 100)
+  }'
+```
+
+```bash
+# New subscriptions in last 30 days
+curl -s -G "https://api.stripe.com/v1/subscriptions" \
+  -u "${STRIPE_SECRET_KEY}:" \
+  -d "status=active" \
+  -d "created[gte]=$(date -v-30d +%s)" \
+  -d "limit=100" | jq '{
+    new_subscriptions_30d: (.data | length),
+    new_mrr_dollars: ([.data[].items.data[].price.unit_amount] | add / 100)
+  }'
+```
+
+### Churn Rate
+
+```bash
+# Cancelled subscriptions in last 30 days
+curl -s -G "https://api.stripe.com/v1/subscriptions" \
+  -u "${STRIPE_SECRET_KEY}:" \
+  -d "status=canceled" \
+  -d "created[gte]=$(date -v-30d +%s)" \
+  -d "limit=100" | jq '{
+    churned_count: (.data | length),
+    churned_mrr_dollars: ([.data[].items.data[].price.unit_amount] | add / 100)
+  }'
+```
+
+**Churn metrics to calculate:**
+| Metric | Formula | Good (SaaS) |
+|--------|---------|-------------|
+| Monthly churn rate | Cancelled / Start-of-month active | < 5% |
+| Revenue churn | Lost MRR / Start-of-month MRR | < 3% |
+| Net revenue retention | (MRR + expansion - contraction - churn) / starting MRR | > 100% |
+
+### LTV (Lifetime Value)
+
+```
+LTV = ARPU / Monthly Churn Rate
+Example: $29 ARPU / 5% churn = $580 LTV
+
+LTV:CAC ratio should be > 3:1
+Payback period = CAC / ARPU (in months, target < 12)
+```
+
+### Stripe Revenue Snapshot
+
+Add this to the metrics snapshot:
+
+```markdown
+## Revenue Metrics (Stripe)
+- **MRR:** ${mrr}
+- **Active Subscriptions:** {count}
+- **ARPU:** ${arpu}
+- **New Subscriptions (30d):** {count} (${new_mrr}/mo)
+- **Churned Subscriptions (30d):** {count} (${lost_mrr}/mo)
+- **Monthly Churn Rate:** {x}%
+- **Net Revenue Retention:** {x}%
+- **Estimated LTV:** ${ltv}
+- **LTV:CAC Ratio:** {x}:1
+- **Payback Period:** {x} months
+```
+
+## Email Metrics
+
+Pull email campaign and sequence performance data from the project's email provider.
+
+### Resend Metrics
+
+```bash
+# Get email stats for a specific tag/campaign
+curl -s -G "https://api.resend.com/emails" \
+  -H "Authorization: Bearer ${RESEND_API_KEY}" | jq .
+```
+
+### SendGrid Metrics
+
+```bash
+# Global stats for last 7 days
+curl -s -G "https://api.sendgrid.com/v3/stats" \
+  -H "Authorization: Bearer ${SENDGRID_API_KEY}" \
+  -d "start_date=$(date -v-7d +%Y-%m-%d)" | jq '.[] | {
+    date: .date,
+    requests: .stats[0].metrics.requests,
+    delivered: .stats[0].metrics.delivered,
+    opens: .stats[0].metrics.opens,
+    unique_opens: .stats[0].metrics.unique_opens,
+    clicks: .stats[0].metrics.clicks,
+    unique_clicks: .stats[0].metrics.unique_clicks,
+    bounces: .stats[0].metrics.bounces,
+    unsubscribes: .stats[0].metrics.unsubscribes
+  }'
+```
+
+```bash
+# Stats by category (campaign name)
+curl -s -G "https://api.sendgrid.com/v3/categories/stats" \
+  -H "Authorization: Bearer ${SENDGRID_API_KEY}" \
+  -d "start_date=$(date -v-7d +%Y-%m-%d)" \
+  -d "categories=${CAMPAIGN_NAME}" | jq .
+```
+
+### Email Metrics to Track
+
+| Metric | Formula | Good | Great | Action if below |
+|--------|---------|------|-------|-----------------|
+| Delivery rate | Delivered / Sent | > 95% | > 99% | Check DNS (SPF/DKIM), clean list |
+| Open rate | Unique opens / Delivered | 20-30% | 35%+ | Improve subject lines |
+| Click rate | Unique clicks / Delivered | 2-5% | 5%+ | Improve CTA copy and placement |
+| Click-to-open rate | Unique clicks / Unique opens | 10-15% | 20%+ | Content relevance issue |
+| Bounce rate | Bounces / Sent | < 2% | < 0.5% | List hygiene, remove invalid emails |
+| Unsubscribe rate | Unsubscribes / Delivered | < 0.5% | < 0.2% | Reduce frequency, improve targeting |
+| Spam complaint rate | Complaints / Delivered | < 0.1% | < 0.01% | CRITICAL -- fix immediately |
+
+### Email Sequence Performance
+
+Track per-sequence metrics to identify which lifecycle emails drive action:
+
+```markdown
+## Email Sequence Performance
+| Sequence | Email # | Subject | Open Rate | Click Rate | CTOR | Unsub | Goal Conv |
+|----------|---------|---------|-----------|------------|------|-------|-----------|
+| Welcome | 1 | {subject} | {x}% | {x}% | {x}% | {x}% | {x}% |
+| Welcome | 2 | {subject} | {x}% | {x}% | {x}% | {x}% | {x}% |
+| Activation | 1 | {subject} | {x}% | {x}% | {x}% | {x}% | {x}% |
+```
+
+## SEO & Organic Traffic Data
+
+Track organic search performance to measure the Acquisition stage from non-paid channels.
+
+### Google Search Console Data (if available)
+
+```bash
+# If the project has Google Search Console API access:
+curl -s -X POST "https://www.googleapis.com/webmasters/v3/sites/${SITE_URL}/searchAnalytics/query" \
+  -H "Authorization: Bearer ${GSC_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "startDate": "'"$(date -v-30d +%Y-%m-%d)"'",
+    "endDate": "'"$(date +%Y-%m-%d)"'",
+    "dimensions": ["query"],
+    "rowLimit": 25
+  }' | jq '.rows[] | {query: .keys[0], clicks: .clicks, impressions: .impressions, ctr: .ctr, position: .position}'
+```
+
+### PostHog Organic Traffic
+
+```bash
+# Organic traffic from PostHog (visitors without utm_source)
+curl -s -X POST "${POSTHOG_HOST}/api/projects/${PROJECT_ID}/query" \
+  -H "Authorization: Bearer ${POSTHOG_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": {
+      "kind": "HogQLQuery",
+      "query": "SELECT toStartOfWeek(timestamp) as week, count(distinct person_id) as visitors, count() as pageviews FROM events WHERE event = '\''$pageview'\'' AND (properties.$utm_source IS NULL OR properties.$utm_source = '\'''\'' OR properties.$referring_domain LIKE '\''%google%'\'' OR properties.$referring_domain LIKE '\''%bing%'\'') AND timestamp > now() - interval 30 day GROUP BY week ORDER BY week"
+    }
+  }' | jq .
+```
+
+### SEO Metrics to Track
+
+| Metric | Source | Good | Action if below |
+|--------|--------|------|-----------------|
+| Organic visitors/week | PostHog | Growing week-over-week | Content strategy or technical SEO issue |
+| Organic signup rate | PostHog | > 5% | Landing page optimization needed |
+| Top keywords (by clicks) | GSC | Brand + category terms | Content gap analysis needed |
+| Average position (target keywords) | GSC | < 10 (page 1) | On-page SEO optimization |
+| Organic share of total traffic | PostHog | > 30% | Over-reliance on paid channels |
+
+### SEO Snapshot
+
+Add this to the metrics snapshot:
+
+```markdown
+## SEO & Organic Metrics
+- **Organic Visitors (30d):** {count}
+- **Organic Signups (30d):** {count} ({x}% conversion)
+- **Organic Share of Traffic:** {x}%
+- **Top Keywords:** {list top 5 by clicks}
+- **Avg Position (target keywords):** {x}
+- **Pages Indexed:** {count}
+- **Organic Trend:** {growing/declining/stable} ({x}% vs previous 30d)
+```
+
+## Unified Cross-Channel Attribution
+
+The most valuable analysis combines ALL data sources into a single attribution view.
+
+### Attribution Model
+
+Build a unified view by joining data across channels:
+
+```
+Source Channel → First Touch → Signup → Activation → Payment
+   Meta Ads         UTM          PostHog    PostHog      Stripe
+   Google Ads       UTM          PostHog    PostHog      Stripe
+   Email            UTM          PostHog    PostHog      Stripe
+   Organic          Referrer     PostHog    PostHog      Stripe
+   Referral         ref code     PostHog    PostHog      Stripe
+   Direct           (none)       PostHog    PostHog      Stripe
+```
+
+### Cross-Channel Performance Table
+
+```markdown
+## Cross-Channel Attribution
+| Channel | Spend | Visitors | Signups | Signup Rate | Activated | Activation Rate | Paid | Conv Rate | Revenue | CAC | ROAS |
+|---------|-------|----------|---------|-------------|-----------|-----------------|------|-----------|---------|-----|------|
+| Meta Ads | ${x} | {x} | {x} | {x}% | {x} | {x}% | {x} | {x}% | ${x} | ${x} | {x} |
+| Google Ads | ${x} | {x} | {x} | {x}% | {x} | {x}% | {x} | {x}% | ${x} | ${x} | {x} |
+| Email | $0 | {x} | {x} | {x}% | {x} | {x}% | {x} | {x}% | ${x} | $0 | inf |
+| Organic | $0 | {x} | {x} | {x}% | {x} | {x}% | {x} | {x}% | ${x} | $0 | inf |
+| Referral | ${x} | {x} | {x} | {x}% | {x} | {x}% | {x} | {x}% | ${x} | ${x} | {x} |
+| Direct | $0 | {x} | {x} | {x}% | {x} | {x}% | {x} | {x}% | ${x} | $0 | inf |
+| **TOTAL** | **${x}** | **{x}** | **{x}** | **{x}%** | **{x}** | **{x}%** | **{x}** | **{x}%** | **${x}** | **${x}** | **{x}** |
+```
+
+### Cross-Channel Insights
+
+After building the attribution table, analyze:
+
+1. **Channel efficiency ranking:** Sort by CAC ascending. Which channel acquires customers cheapest?
+2. **Channel quality ranking:** Sort by activation rate. Which channel brings the most engaged users?
+3. **Revenue concentration risk:** If one channel drives > 60% of revenue, flag the dependency.
+4. **Assisted conversions:** Users who touched multiple channels before converting. Meta ad -> later Google search -> signup = Meta gets first-touch credit, Google gets last-touch credit, both deserve partial credit.
+5. **Budget optimization opportunity:** Calculate the marginal CAC for each channel. If Meta CAC is $40 and Google CAC is $25, shifting budget to Google (until its marginal CAC rises) is the obvious move.
+
 ## Rules
 
-1. **Always pull both Meta AND PostHog data.** Meta data alone only tells half the story. PostHog shows what happens after the click.
+1. **Always pull ALL available data sources.** Meta, Google, PostHog, Stripe, email, SEO. Partial data leads to wrong conclusions.
 2. **Never report vanity metrics in isolation.** Impressions and clicks mean nothing without downstream conversion data.
 3. **Always include the date range** in every query and every report. Data without time context is meaningless.
 4. **Use `time_increment=1` for daily granularity** to spot trends, not just averages.
-5. **Check for data freshness.** Meta reporting has a 24-48 hour delay. PostHog is near real-time. Note the discrepancy.
-6. **Always calculate derived metrics** (CPL, CPA, CAC, ROAS) -- never just dump raw API responses.
+5. **Check for data freshness.** Meta reporting has a 24-48 hour delay. PostHog is near real-time. Stripe is real-time. Note discrepancies.
+6. **Always calculate derived metrics** (CPL, CPA, CAC, ROAS, LTV, MRR, churn) -- never just dump raw API responses.
 7. **Flag creative fatigue** when frequency > 3 and CTR is declining over 3+ days.
 8. **Flag audience saturation** when reach is plateauing but frequency is climbing.
 9. **Compare to previous snapshots** in `.gtm/metrics/` to identify trends. Is CPL going up or down?
 10. **Action items must be specific.** "Optimize campaigns" is not an action item. "Pause ad set X (CPL $45, 2x above target) and reallocate $30/day to ad set Y (CPL $12)" is.
+11. **Cross-channel attribution is the gold standard.** Always produce the unified attribution table when data from multiple channels is available.
+12. **Revenue metrics anchor everything.** MRR, churn, and LTV from Stripe are the ultimate source of truth for whether GTM efforts are working.
