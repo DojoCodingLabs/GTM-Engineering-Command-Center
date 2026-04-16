@@ -238,3 +238,288 @@ Tools:
      - Shows schema errors across your entire site
      - Alerts on new issues
 ```
+
+## AI Crawler Readiness
+
+AI retrieval crawlers (OAI-SearchBot, Claude-SearchBot, PerplexityBot) behave differently from traditional search crawlers. Most critically: **they do not execute JavaScript**.
+
+### SSR Is Table Stakes
+
+```
+AI crawler rendering capabilities:
+
+| Crawler | Executes JS? | Follows redirects? | Reads robots.txt? |
+|---------|-------------|-------------------|-------------------|
+| Googlebot | Yes (headless Chrome) | Yes | Yes |
+| OAI-SearchBot | No | Yes | Yes |
+| Claude-SearchBot | No | Yes | Yes |
+| PerplexityBot | No | Limited | Yes |
+| Bingbot | Partially | Yes | Yes |
+
+Implication:
+  - SPA-only sites (React/Vue without SSR) are INVISIBLE to AI retrieval crawlers
+  - Content rendered only via client-side JavaScript will never be cited by AI
+  - SSR or SSG is mandatory for any page targeting AI citations
+  - Even hybrid apps must ensure SEO-critical pages render on the server
+```
+
+### TTFB Requirements
+
+AI crawlers have aggressive timeout thresholds. If your server does not respond quickly, the crawler abandons the request and moves to the next candidate:
+
+```
+TTFB targets for AI crawler compatibility:
+
+| Threshold | Result |
+|-----------|--------|
+| < 400ms | Optimal -- all crawlers will wait |
+| 400-500ms | Borderline -- some crawlers may abandon |
+| > 500ms | Likely abandoned by AI retrieval crawlers |
+| > 800ms | Problematic even for traditional search crawlers |
+
+How to achieve < 400ms TTFB:
+  1. CDN with edge caching for static/SSG pages
+  2. Server-side caching (Redis, Varnish) for SSR pages
+  3. Database query optimization (indexes, connection pooling)
+  4. Edge rendering (Vercel Edge, Cloudflare Workers)
+  5. Prerender and cache pages that AI crawlers hit most
+```
+
+### What AI Crawlers Cannot See
+
+```
+Invisible to AI retrieval:
+  - Content behind authentication (login walls)
+  - Content behind paywalls
+  - Content loaded via client-side JavaScript after page load
+  - Content inside iframes from different origins
+  - Content in images/PDFs (unless also present as HTML text)
+  - Content injected by browser extensions or client-side scripts
+  - Lazy-loaded content below the fold (some crawlers only read initial HTML)
+
+Visible to AI retrieval:
+  - Server-rendered HTML (SSR/SSG)
+  - Static HTML files
+  - Content in the initial HTML response
+  - Text content in semantic HTML elements (p, h1-h6, li, td, blockquote)
+  - Schema markup in JSON-LD script tags
+  - Meta tags in the document head
+```
+
+## The Balanced robots.txt
+
+The traditional robots.txt is no longer sufficient. AI crawlers come in two categories, and they require different treatment:
+
+### Retrieval vs Training Crawlers
+
+```
+RETRIEVAL CRAWLERS (allow -- these drive citations):
+  OAI-SearchBot     -- OpenAI's search crawler (powers ChatGPT browse)
+  ChatGPT-User      -- ChatGPT browsing on behalf of a user
+  Claude-SearchBot   -- Anthropic's search retrieval crawler
+  PerplexityBot     -- Perplexity's retrieval crawler
+  Applebot-Extended -- Apple Intelligence retrieval
+  Bingbot           -- Bing (powers Copilot's retrieval index)
+
+TRAINING CRAWLERS (optional block -- content scraping for model training):
+  GPTBot            -- OpenAI's training data crawler
+  ClaudeBot         -- Anthropic's training data crawler
+  CCBot             -- Common Crawl (used by many AI training sets)
+  Google-Extended   -- Google's AI training crawler
+  Bytespider        -- ByteDance/TikTok training crawler
+```
+
+### Recommended Configuration
+
+```
+# === AI RETRIEVAL CRAWLERS (ALLOW) ===
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# === AI TRAINING CRAWLERS (BLOCK) ===
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+# === STANDARD SEARCH CRAWLERS (ALLOW) ===
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /auth/
+
+Sitemap: https://example.com/sitemap.xml
+```
+
+**Critical**: Blocking `GPTBot` does NOT block `OAI-SearchBot`. They are separate crawlers. You can block training while allowing retrieval.
+
+## IndexNow
+
+IndexNow is an instant URL notification protocol supported by Bing, Yandex, and several AI retrieval indexes. Instead of waiting for crawlers to discover your updated pages, you push a notification that tells them "this URL has changed."
+
+### Why It Matters for AI Visibility
+
+```
+Traditional crawl discovery:
+  Page updated → Wait 1-7 days → Crawler discovers change → Re-indexes → Available for retrieval
+
+With IndexNow:
+  Page updated → Instant notification → Re-indexed within minutes → Available for retrieval
+
+For AI citations, speed matters because:
+  1. AI systems inject "2026" into 28.1% of queries (freshness is a signal)
+  2. Faster re-indexing = faster citation eligibility after content refresh
+  3. Bing powers many AI retrieval indexes (Copilot, ChatGPT via Bing)
+```
+
+### Implementation
+
+```bash
+# 1. Generate an IndexNow API key (any random string, 8-128 hex chars)
+# 2. Place the key file at your site root: https://example.com/{key}.txt
+# 3. The file content should be the key itself
+
+# 4. Submit URL updates via HTTP GET or POST:
+curl "https://api.indexnow.org/IndexNow?url=https://example.com/updated-page&key=YOUR_KEY"
+
+# 5. For batch updates (POST):
+curl -X POST "https://api.indexnow.org/IndexNow" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "host": "example.com",
+    "key": "YOUR_KEY",
+    "urlList": [
+      "https://example.com/page-1",
+      "https://example.com/page-2",
+      "https://example.com/page-3"
+    ]
+  }'
+```
+
+### When to Trigger IndexNow
+
+- After publishing a new page
+- After updating an existing page (content refresh)
+- After changing meta tags, schema markup, or page structure
+- After fixing broken pages or resolving 404 errors
+- Integrate into your CI/CD pipeline for automatic submission on deploy
+
+## Schema for AI Citation
+
+Schema markup helps AI systems understand your content's structure and authority. While traditional SEO uses schema for rich results, AI citation requires specific schema patterns:
+
+### Required Schema Types
+
+**Article (on every content page):**
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Page Title That Matches Target Query",
+  "datePublished": "2026-04-14T00:00:00Z",
+  "dateModified": "2026-04-14T00:00:00Z",
+  "author": {
+    "@type": "Person",
+    "name": "Author Name",
+    "url": "https://example.com/team/author"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Brand Name",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://example.com/logo.png"
+    }
+  }
+}
+```
+
+**FAQPage (on pages with Q&A content):**
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Question phrased as user would ask it?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Direct answer in 40-60 words for featured snippet, then expanded context."
+      }
+    }
+  ]
+}
+```
+
+**Organization (on homepage, with sameAs for knowledge graph):**
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Brand Name",
+  "url": "https://example.com",
+  "logo": "https://example.com/logo.png",
+  "sameAs": [
+    "https://twitter.com/brand",
+    "https://github.com/brand",
+    "https://linkedin.com/company/brand",
+    "https://www.wikidata.org/wiki/QXXXXXXX",
+    "https://www.crunchbase.com/organization/brand"
+  ]
+}
+```
+
+**Product/Offer (on pricing and product pages):**
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "Product Name",
+  "description": "Clear product description",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock"
+  }
+}
+```
+
+### Schema Rules for AI
+
+1. **datePublished and dateModified are mandatory** -- AI systems use these as freshness signals
+2. **sameAs links on Organization connect your brand to the knowledge graph** -- Include Wikidata, Crunchbase, social profiles
+3. **author information builds topical authority** -- Link to author pages with their credentials
+4. **FAQPage schema gets extracted with high fidelity** -- AI systems love structured Q&A
+5. **Keep schema accurate** -- Outdated or inaccurate schema erodes trust in the retrieval index

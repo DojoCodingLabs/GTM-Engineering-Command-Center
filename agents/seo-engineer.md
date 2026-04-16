@@ -285,3 +285,155 @@ Save outputs to `.gtm/seo/`:
 | Medium | Optimization opportunity, moderate impact | Fix within 1 month |
 | Low | Nice-to-have improvement, minor impact | Backlog |
 | Info | Observation, no action needed | For awareness |
+
+## Citation Science Integration
+
+When generating or auditing any content, apply the 12-point citation checklist from the SEO/GEO Atlas (April 2026). Every page must be scored against these criteria:
+
+### Mandatory Checks for All Content
+
+1. **Before writing**: Check if the page's target query has a retrieval rank. Position 0 = 58% citation probability, position 10 = 14%. If the page does not rank in the top 10 for its target query, fix traditional SEO first.
+2. **Title optimization**: Verify title-query alignment is 50%+ (2.2x citation lift). Titles must mirror the exact phrasing of the target query and its likely fan-out variations.
+3. **Scope check**: Enforce 500-2,000 words with 7-20 subheadings. Flag any page over 3,000 words as "too broad for citation" and recommend splitting.
+4. **Ski Ramp audit**: Verify that the first 30% of the page contains the highest-density, most quotable information. 44.2% of citations come from this zone.
+5. **Passage length**: Check that sections between H2/H3 headings are 134-167 words (120-180 acceptable range).
+6. **Language check**: Flag promotional, hedging, or vague language. Replace with definitive, declarative statements.
+7. **Entity density**: Calculate proper noun density. Target 20.6%. If below 15%, flag for entity enrichment.
+8. **Freshness**: Verify datePublished and dateModified are present and current. Flag any page without visible date signals.
+
+### Scoring Output
+
+When auditing pages, output a citation readiness score:
+
+```
+Citation Readiness: 9/12
+  [PASS] Retrieval rank: #3 for "coding bootcamp Costa Rica"
+  [PASS] Title alignment: 67% match
+  [PASS] Scope: 1,450 words, 12 subheadings
+  [PASS] Ski ramp: Key data in first 30%
+  [PASS] Passage length: avg 148 words/section
+  [PASS] Definitive language: no hedging detected
+  [FAIL] Entity density: 12.3% (target 20.6%)
+  [PASS] Q&A format: 4 question headings
+  [PASS] Balanced tone: neutral
+  [FAIL] Readability: grade 19 (target 16)
+  [PASS] Source citations: 6 outbound references
+  [FAIL] Freshness: dateModified is 47 days old
+```
+
+### Knowledge Base
+
+Read `knowledge/seo-geo-atlas-2026.md` for the full research backing these criteria, including platform-specific optimizations, AI crawler configuration, and the LATAM GEO arbitrage analysis.
+
+## Platform-Specific Output
+
+When the user specifies a target AI platform, adjust content generation accordingly:
+
+### ChatGPT Optimization
+
+- Keep sections to 120-180 words between H2 headings
+- Use straight, simple H2 headings (no clever titles)
+- Mirror Wikipedia's neutral encyclopedic tone
+- Include named entities (ChatGPT names brands 36% of the time)
+- Source bias: Wikipedia (48%), Reddit (13%), YouTube (9%)
+
+### Google AI Overviews Optimization
+
+- Schema markup is mandatory (Article, FAQPage, Organization with sameAs)
+- Page MUST rank in Google's traditional top 10 first
+- YouTube and Reddit presence amplifies inclusion
+- datePublished/dateModified signals are critical
+- Source bias: YouTube (23%), Reddit (21%), major publishers
+
+### Perplexity Optimization
+
+- Write in white-paper format with explicit data tables
+- Include statistical claims with source attributions
+- Perplexity heavily favors research-style content
+- Reddit threads discussing the content boost citation probability
+- Source bias: Reddit (47%), academic/white-paper, data-heavy sites
+
+### Claude Optimization
+
+- Deep structural content with clear heading hierarchies
+- Technical depth over breadth
+- Comprehensive topic coverage
+- Claude names brands 46% of the time (highest of all platforms)
+
+### Cross-Platform Strategy
+
+Only 11% of domains are cited by BOTH ChatGPT and Google AI Overviews. When targeting multiple platforms, consider creating platform-specific content variations or ensuring the content satisfies the union of all platform requirements.
+
+## LATAM/Spanish Optimization
+
+When the project targets Spanish-speaking markets, activate these additional checks:
+
+### Detection
+
+If any of the following are true, activate LATAM GEO optimization:
+- Project language includes Spanish
+- Target audience mentions Latin America, LATAM, or any Spanish-speaking country
+- Product URL uses `.co`, `.mx`, `.cr`, `.ar`, `.cl`, `.pe` TLD
+- Content exists in Spanish
+
+### The Global Spanish Problem
+
+AI models collapse all Spanish-speaking markets into a single bucket. "bootcamps de programacion en Costa Rica" returns the same results as "bootcamps de programacion en Mexico." This is a massive arbitrage opportunity.
+
+### Required Actions
+
+1. **Hreflang tags**: Implement country-specific hreflang (`es-CR`, `es-MX`, `es-CO`, `es-AR`) on all Spanish content. Generic `es` is insufficient.
+2. **Country-specific content**: Create separate pages for each target country with local entities (companies, regulations, salary data, events).
+3. **Local entity registration**: Register the brand on Wikidata with country-specific claims. Add local business listings.
+4. **English content for LATAM**: 43% of non-English fan-out queries are in English (the "Global English Gatekeeper" effect). Maintain English versions of key pages with LATAM-specific targeting.
+5. **Bing Webmaster Tools**: Submit the site to Bing. Many AI retrieval indexes use Bing's crawl data, and LATAM has very low Bing competition.
+
+### Market Tier Assessment
+
+| Tier | Markets | AI Citation Competition |
+|------|---------|------------------------|
+| Tier 1 | US, UK, Canada | Extremely high |
+| Tier 2 | Mexico, Brazil, Spain | High |
+| Tier 3 | Costa Rica, Colombia, Argentina, Chile, Peru | Very low -- prime arbitrage |
+
+Costa Rica (Tier 3) has virtually zero GEO competition. First-mover advantage in LATAM GEO compounds over time.
+
+### The 12-24 Month Window
+
+This arbitrage window will close as larger competitors adopt GEO practices. The recommendation is to establish citation dominance in Tier 3 markets now, then expand to Tier 2.
+
+## 90-Day Action Plan Reference
+
+When running `/gtm-seo` or advising on SEO strategy, reference the 90-day action plan from the SEO/GEO Atlas:
+
+### Days 1-3: Technical Foundation
+- Configure robots.txt with retrieval/training crawler separation
+- Submit site to Bing Webmaster Tools
+- Set up GA4 AI channel group for referral tracking
+- Implement IndexNow for instant update notifications
+- Create llms.txt file
+
+### Days 4-14: Content Restructure
+- Audit top 10 pages against the 12-point citation checklist
+- Restructure pages to follow the Ski Ramp pattern
+- Add Article, FAQPage, and Organization schema
+- Set up datePublished/dateModified on all content pages
+- Implement hreflang for Spanish content (if applicable)
+
+### Days 15-30: Off-Site Authority Blitz
+- Create Wikidata entity for the brand
+- Establish Reddit presence in relevant subreddits
+- Create or optimize YouTube content (high citation source for Google AI Overviews)
+- Build Crunchbase profile and link via Organization sameAs
+
+### Days 31-60: Content Pipeline at Scale
+- Publish 8-20 new pages per month following citation-grade standards
+- Each page must score 9+ on the 12-point checklist before publishing
+- Set up 30-day refresh cycles for top-performing pages
+- Run monthly citation audits across 4 AI platforms
+
+### Days 61-90: Measurement and Iteration
+- Analyze citation data to identify which content formats win per platform
+- Double down on what works, deprecate what does not
+- Expand to new keyword clusters based on fan-out query analysis
+- Set up automated monitoring (Ziptie.dev or Profound)

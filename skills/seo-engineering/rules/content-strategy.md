@@ -250,3 +250,205 @@ Ongoing:
   - Update top-performing content monthly
   - Identify content gaps from competitor analysis quarterly
 ```
+
+## Citation-Grade Content Engineering
+
+The SEO/GEO Atlas (April 2026) identifies 12 content characteristics that predict whether a page will be cited by AI systems. Apply this checklist to every page targeting AI visibility.
+
+### The 12-Point Checklist
+
+```
+For every page targeting AI citation, verify:
+
+1. [ ] RETRIEVAL RANK -- Page ranks in top 10 for its primary query
+       (Position 0 = 58% citation probability, position 10 = 14%)
+
+2. [ ] TITLE-QUERY ALIGNMENT -- Title mirrors the exact phrasing of target queries
+       (50%+ alignment = 2.2x citation lift)
+
+3. [ ] FOCUSED SCOPE -- 500-2,000 words with 7-20 subheadings
+       (Focused pages beat "ultimate guides" for AI citation)
+
+4. [ ] SKI RAMP -- First 30% of page contains highest-density information
+       (44.2% of citations come from first 30% of content)
+
+5. [ ] PASSAGE LENGTH -- 134-167 words per section between H2/H3 headings
+       (120-180 word sweet spot for ChatGPT-style extraction)
+
+6. [ ] DEFINITIVE LANGUAGE -- Uses authoritative, declarative statements
+       ("X is the leading..." not "X might be considered...")
+
+7. [ ] Q&A FORMAT -- Question headings with direct answers in first sentence
+       (AI systems extract Q&A pairs with highest fidelity)
+
+8. [ ] ENTITY DENSITY -- 20.6% proper noun density (named people, companies, products)
+       (Web average is 5-8%; high entity density = citable content)
+
+9. [ ] BALANCED TONE -- Neutral, authoritative, not promotional
+       (AI systems down-rank hyperbolic or salesy content)
+
+10. [ ] READABILITY -- Grade level ~16 (Flesch-Kincaid)
+        (Academic clarity without unnecessary complexity)
+
+11. [ ] SOURCE CITATIONS -- Outbound references to authoritative sources with data
+        (AI systems prefer content that itself cites sources)
+
+12. [ ] FRESHNESS SIGNALS -- Visible datePublished and dateModified
+        (28.1% of fan-out queries auto-inject "2026")
+```
+
+### Applying the Checklist
+
+- Score each page 0-12 (one point per passing criterion)
+- Pages scoring 9+ are in the "always-cited" category
+- Pages scoring 6-8 need targeted improvements
+- Pages scoring below 6 need structural rewrites
+- Only 15% of retrieved pages ever get cited -- the checklist is what separates the 15% from the 85%
+
+## The Ski Ramp Rule
+
+Research shows 44.2% of all AI citations come from the first 30% of a page's content. This means the opening section of any page is disproportionately important for AI visibility.
+
+### How to Front-Load
+
+```
+Page structure for citation optimization:
+
+FIRST 30% (the "Ski Ramp" -- where 44.2% of citations come from):
+  1. Definitive opening statement (1-2 sentences answering the core query)
+  2. Key facts / data points (the most quotable numbers)
+  3. Comparison table or summary table (if applicable)
+  4. TL;DR or "Key Takeaways" section with 3-5 bullet points
+
+MIDDLE 40% (supporting depth):
+  5. Detailed breakdown by subtopic (H2 sections)
+  6. Evidence, examples, case studies
+  7. Step-by-step processes (if applicable)
+
+FINAL 30% (context and discovery):
+  8. FAQ section (Q&A format with schema)
+  9. Related topics and internal links
+  10. Methodology, sources, update history
+```
+
+### Anti-Patterns
+
+- **Burying the lede**: Starting with background history instead of the answer
+- **Long introductions**: 300+ word intros before the substantive content begins
+- **Saving the best for last**: Putting the most interesting data at the bottom
+- **Progressive disclosure**: Forcing users to read sequentially to reach the key insight
+
+## Optimal Passage Structure
+
+AI retrieval systems extract content in passages (chunks between headings). Research shows optimal passage length varies by platform:
+
+### Length Targets
+
+| Context | Optimal Length | Why |
+|---------|---------------|-----|
+| Between H2 headings | 120-180 words | ChatGPT extraction window |
+| Between H3 headings | 134-167 words | Highest citation probability zone |
+| FAQ answers | 40-60 words (featured snippet) + 100-150 words (expanded) | Two-tier: snippet + depth |
+| Comparison table cells | 15-30 words per cell | Structured extraction |
+| Opening definition | 1-2 sentences (25-50 words) | Direct answer extraction |
+
+### Section Structure Template
+
+```markdown
+## [Question or Topic as H2]
+
+[Direct answer in 1-2 sentences -- the "quotable statement." 25-50 words.]
+
+[Supporting context paragraph. Include one specific data point or named entity.
+Expand on the answer with evidence or nuance. 50-70 words.]
+
+[Practical application paragraph. Connect to the reader's situation. Include
+a specific example, recommendation, or next step. 40-60 words.]
+
+Total: ~134-167 words between this H2 and the next.
+```
+
+### What NOT to Do
+
+- Sections over 300 words between headings (too long for extraction)
+- Sections under 50 words between headings (too thin, looks low-quality)
+- Multiple topics crammed into one section (breaks topical coherence)
+- Sections that are just lists without any prose (AI needs context around data)
+
+## Entity Density
+
+AI systems determine content authority partly through entity density -- the ratio of named entities (proper nouns) to total content.
+
+### Target: 20.6% Entity Density
+
+The web average is 5-8% proper noun density. Pages cited by AI systems average 20.6%. This means approximately 1 in 5 words should be a named entity:
+
+```
+Low entity density (5%):
+"The platform helps users learn to code. It has various courses
+and features that make learning easier. Users can track their progress."
+
+High entity density (20%+):
+"Dojo Coding's Pathways module uses Supabase for real-time progress
+tracking. Students in Costa Rica and Mexico complete Solidity and
+TypeScript courses, with certifications verified on Ethereum."
+```
+
+### Entity Types to Include
+
+- **People**: Founders, instructors, industry experts
+- **Companies**: Your brand, competitors, partners, clients
+- **Products**: Specific product names, features, technologies
+- **Technologies**: Programming languages, frameworks, protocols
+- **Places**: Cities, countries, regions (especially for LATAM targeting)
+- **Institutions**: Universities, organizations, regulatory bodies
+- **Events**: Conferences, launches, industry milestones
+
+### How to Increase Entity Density
+
+1. Replace generic terms with specific names ("a coding platform" -> "Dojo Coding")
+2. Include competitor names in comparison content
+3. Reference specific technologies by name (not "a database" but "Supabase" or "PostgreSQL")
+4. Add geographic entities for local targeting
+5. Cite specific sources by name ("according to a16z's State of Crypto 2026 report")
+
+## Content Refresh Cadence
+
+AI systems weight freshness heavily. 28.1% of fan-out queries auto-inject the current year. Stale content loses citation eligibility rapidly.
+
+### Refresh Tiers
+
+| Content Type | Refresh Cycle | What to Update |
+|-------------|---------------|----------------|
+| Comparison pages ("X vs Y") | Every 30 days | Pricing, features, latest version, date in title |
+| "Best of" listicles | Every 30 days | Rankings, new entries, remove defunct products |
+| Data/statistics pages | Every 30 days | Latest numbers, source dates, trend lines |
+| Tutorial/how-to guides | Every 90 days | Version numbers, deprecated methods, new approaches |
+| Evergreen definitions | Every 180 days | Relevance check, new examples, related terms |
+| Company/product pages | Every 90 days | Updated metrics, new features, team changes |
+
+### What a "Refresh" Includes
+
+```
+Minimum viable refresh (15 minutes per page):
+  1. Update dateModified in schema markup and visible on page
+  2. Update the year in the title (if applicable)
+  3. Verify all external links still work
+  4. Add 1-2 new data points or examples
+  5. Remove any outdated information
+
+Full refresh (1-2 hours per page):
+  1. Everything in minimum refresh, plus:
+  2. Rewrite the opening 30% (ski ramp) with latest data
+  3. Add a new section addressing recent developments
+  4. Update comparison tables with current pricing/features
+  5. Re-run through the 12-point citation checklist
+  6. Check citation performance across 4 AI platforms
+```
+
+### Automation
+
+- Set calendar reminders for top 10 pages on 30-day cycles
+- Use a content inventory spreadsheet tracking last refresh date per page
+- Monitor AI citation drops as a trigger for unscheduled refreshes
+- Automate dateModified updates in your CMS or build system

@@ -13,7 +13,8 @@ You are the seo-engineer agent. You will audit the project's SEO infrastructure,
 1. Read `.gtm/config.json` in the project root.
    - If the file does not exist, tell the user: "GTM Command Center is not set up. Run `/gtm-setup` first." Then STOP.
 2. Load product context from `config.product` (name, description, landing_url, target_audience).
-3. Scan the project codebase for SEO infrastructure:
+3. Read `knowledge/seo-geo-atlas-2026.md` from the GTM Engineering Command Center plugin for citation science benchmarks, platform-specific rules, and the 12-point citation checklist.
+4. Scan the project codebase for SEO infrastructure:
 
 ### 1.1: Meta Tags and Head Management
 
@@ -135,6 +136,71 @@ Technical SEO Scores:
 | Schema Markup | 0/100 | No structured data |
 | Meta Tags | 35/100 | Missing on 60% of pages |
 ```
+
+## Phase 2.5: Citation Audit
+
+After the technical audit, assess each discoverable page against the 12-point citation checklist from the SEO/GEO Atlas.
+
+### 2.5.1: Run the 12-Point Citation Checklist
+
+For each of the project's top pages (homepage + top 10 content pages), score against:
+
+```
+Citation Readiness Checklist:
+
+1. [ ] RETRIEVAL RANK -- Does this page rank in the top 10 for its primary query?
+2. [ ] TITLE-QUERY ALIGNMENT -- Does the title mirror target query phrasing (50%+ match)?
+3. [ ] FOCUSED SCOPE -- Is the page 500-2,000 words with 7-20 subheadings?
+4. [ ] SKI RAMP -- Is the highest-density info in the first 30% of content?
+5. [ ] PASSAGE LENGTH -- Are sections 134-167 words between headings?
+6. [ ] DEFINITIVE LANGUAGE -- Does the page use authoritative, declarative statements?
+7. [ ] Q&A FORMAT -- Are there question headings with direct first-sentence answers?
+8. [ ] ENTITY DENSITY -- Is proper noun density near 20.6% (vs 5-8% web average)?
+9. [ ] BALANCED TONE -- Is the tone neutral and authoritative (not promotional)?
+10. [ ] READABILITY -- Is the content at approximately grade level 16?
+11. [ ] SOURCE CITATIONS -- Are there outbound references to authoritative sources?
+12. [ ] FRESHNESS SIGNALS -- Are datePublished and dateModified present and current?
+```
+
+### 2.5.2: Score Each Page
+
+```
+Citation Audit Results:
+
+| Page | Score | Top Gaps |
+|------|-------|----------|
+| /homepage | 5/12 | No ski ramp, no entity density, no date signals |
+| /blog/learn-solidity | 8/12 | Entity density low, passage length too long |
+| /pricing | 3/12 | No Q&A, no citations, promotional tone |
+```
+
+### 2.5.3: LATAM/Spanish Language Check
+
+If the project has Spanish content or targets LATAM markets, perform these additional checks:
+
+**Detection criteria** (any match activates this check):
+- `config.product.target_audience` mentions Latin America, LATAM, or any Spanish-speaking country
+- Project contains `.es`, `.co`, `.mx`, `.cr`, `.ar` TLD references
+- Project has Spanish-language pages or i18n configuration
+- Product description mentions Spanish-speaking users
+
+**If LATAM detected, check:**
+
+```
+LATAM GEO Audit:
+
+| Check | Status | Issue |
+|-------|--------|-------|
+| Hreflang tags | Missing | No es-CR, es-MX, es-CO differentiation |
+| Country-specific pages | Missing | All Spanish content uses generic "es" |
+| Local entities | Missing | No country-specific companies, salaries, regulations |
+| Wikidata registration | Missing | Brand has no Wikidata entity |
+| Bing Webmaster Tools | Not submitted | Site not in Bing's index |
+| llms.txt | Missing | No AI-readable site summary |
+| English LATAM content | Missing | No English content targeting LATAM keywords |
+```
+
+**Flag these issues as HIGH severity** -- LATAM GEO is a 12-24 month arbitrage window with virtually zero competition in Tier 3 markets (Costa Rica, Colombia, Argentina, Chile, Peru). The "Global Spanish" problem in AI models means proper hreflang differentiation provides outsized citation advantages.
 
 ## Phase 3: Content Gap Analysis
 

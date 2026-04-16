@@ -156,3 +156,153 @@ GOOGLE_SITE_VERIFICATION=XXXXXXXXXXXX            # Meta tag verification code
 | Core Web Vitals | PageSpeed Insights API | Monthly |
 | Backlink Profile | Ahrefs / Moz API | Monthly |
 | AI Citation Rate | Manual checks + Perplexity | Monthly |
+
+## Citation Science (April 2026)
+
+Research from the SEO/GEO Atlas (7 independent passes, April 2026) reveals that AI citation is predictable and engineerable. The following 12-point checklist determines whether a page will be cited by ChatGPT, Perplexity, Google AI Overviews, or Claude.
+
+### The 12-Point Citation Checklist
+
+Every page targeting AI citation must pass these checks:
+
+1. **Retrieval Rank** -- Position 0 in retrieval = 58% citation probability. Position 10 = 14%. Rank in the retrieval index is the single strongest predictor of citation. Optimize for traditional search ranking first.
+2. **Title-Query Alignment** -- Pages where the title aligns with the query at 50%+ see a 2.2x citation lift. Titles must mirror the exact phrasing users (and AI fan-out queries) use.
+3. **Focused Scope** -- 500-2,000 words with 7-20 subheadings. Focused pages beat "ultimate guides." AI systems prefer extractable, self-contained answers over sprawling content.
+4. **The Ski Ramp** -- 44.2% of all citations come from the first 30% of a page. Front-load the highest-density, most quotable information at the top.
+5. **Optimal Passage Length** -- 134-167 words per section (between H2/H3 headings). 120-180 words is the sweet spot for ChatGPT-style extraction.
+6. **Definitive Language** -- Use authoritative, declarative statements. "X is the leading..." not "X might be considered..."
+7. **Q&A Format** -- Question headings with direct answers in the first sentence. AI systems extract Q&A pairs with high fidelity.
+8. **Entity Density** -- Target 20.6% proper noun density (named people, companies, products, technologies). Web average is 5-8%. High entity density signals factual, citable content.
+9. **Balanced Tone** -- Avoid promotional or hyperbolic language. AI systems prefer neutral, authoritative content. A balanced perspective actually increases citation probability.
+10. **Simpler Writing** -- Grade level 16 (Flesch-Kincaid). Academic-level clarity without unnecessary complexity. Readable but substantive.
+11. **Source Citations** -- Include outbound references to authoritative sources with specific data. AI systems prefer content that itself cites sources.
+12. **Freshness Signals** -- Visible datePublished and dateModified. AI systems inject "2026" into 28.1% of fan-out queries, so dated content gets filtered out.
+
+### The Bimodal Reality
+
+Only 15% of retrieved pages ever get cited. Citation is bimodal: pages are either always-cited or never-cited. There is almost no middle ground. Passing the 12-point checklist moves a page from the "never" category to "always."
+
+## Platform-Specific Optimization
+
+Each AI platform has different source biases, content preferences, and citation patterns. Optimize for the platform your audience uses most.
+
+### ChatGPT
+
+- **Source bias**: Wikipedia (48%), Reddit (13%), YouTube (9%)
+- **Content format**: 120-180 word sections, straight H2 headings, no fancy formatting
+- **Naming**: Names brands in 36% of responses
+- **Strategy**: Mirror Wikipedia's neutral encyclopedic tone. Use clear H2 headings that match common queries. Keep sections self-contained and extractable.
+
+### Google AI Overviews
+
+- **Source bias**: YouTube (23%), Reddit (21%), established publishers
+- **Content format**: Schema-dense pages, Google top-10 rank required as prerequisite
+- **Strategy**: You must already rank in Google's top 10 to be eligible for AI Overviews. Add Article schema with datePublished/dateModified, FAQPage schema, and Organization schema with sameAs links.
+
+### Perplexity
+
+- **Source bias**: Reddit (47%), academic/white-paper format content
+- **Content format**: Data tables, numbered lists, statistical citations
+- **Strategy**: Write in a white-paper format with explicit data tables. Perplexity heavily favors content that looks like research. Include statistical claims with source attributions.
+
+### Claude
+
+- **Source bias**: Favors deep structural content, technical documentation
+- **Content format**: Detailed, well-organized technical content
+- **Naming**: Names brands in 46% of responses (vs ChatGPT's 36%)
+- **Strategy**: Deeper structural content with clear hierarchies. Claude citations favor pages that demonstrate domain expertise through comprehensive coverage.
+
+### The 11% Overlap Problem
+
+Only 11% of domains are cited by BOTH ChatGPT and Google AI Overviews. Optimizing for one does not guarantee visibility on the other. Platform-specific pages or content variations may be necessary for full coverage.
+
+## AI Crawlers and robots.txt
+
+AI systems use two types of crawlers: **retrieval crawlers** (fetch pages to answer queries in real-time) and **training crawlers** (fetch pages to train models). The recommended strategy is to allow retrieval crawlers (they drive citations) while optionally blocking training crawlers.
+
+### The Balanced robots.txt Configuration
+
+```
+# === AI RETRIEVAL CRAWLERS (ALLOW -- these drive citations) ===
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# === AI TRAINING CRAWLERS (OPTIONAL BLOCK -- your content, your choice) ===
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+# === STANDARD SEARCH CRAWLERS (ALLOW) ===
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /auth/
+
+Sitemap: https://example.com/sitemap.xml
+```
+
+**Key distinction**: `OAI-SearchBot` (retrieval, drives citations) vs `GPTBot` (training). `Claude-SearchBot` (retrieval) vs `ClaudeBot` (training). Blocking training crawlers does NOT affect your citation visibility.
+
+## The LATAM GEO Arbitrage
+
+For products targeting Latin America (like DojoOS), there is a 12-24 month arbitrage window in AI-driven search.
+
+### The Global Spanish Problem
+
+AI models collapse all Spanish-speaking markets into a single "Global Spanish" bucket. A query about "bootcamps de programacion en Costa Rica" returns the same results as "bootcamps de programacion en Mexico" -- even though the markets, prices, regulations, and audience are completely different.
+
+### The Hreflang Opportunity
+
+Proper hreflang tagging (es-CR, es-MX, es-CO, es-AR) is massive arbitrage:
+- Forces AI systems to recognize market-specific content
+- Creates differentiated entities per country in the knowledge graph
+- Extremely low competition (almost nobody in LATAM is doing GEO-specific optimization)
+- Costa Rica is a Tier-3 market for AI citations -- virtually no competition
+
+### The Window
+
+- 12-24 months before larger competitors catch up
+- First-mover advantage in LATAM GEO compounds (each citation increases future citation probability)
+- 43% of non-English fan-out queries are actually in English (the "Global English Gatekeeper" effect), so English content targeting LATAM keywords also gets cited
+
+### Implementation
+
+1. Create country-specific landing pages with proper hreflang tags
+2. Include country-specific entities (local companies, local regulations, local salary data)
+3. Register the brand entity on Wikidata with country-specific claims
+4. Submit to Bing Webmaster Tools (Bing powers many AI retrieval indexes)
+
+## Knowledge Base
+
+- `skills/seo-engineering/rules/content-strategy.md` -- Keyword research, content clusters, programmatic SEO
+- `skills/seo-engineering/rules/technical-seo.md` -- Crawlability, indexability, Core Web Vitals
+- `skills/seo-engineering/rules/geo-optimization.md` -- GEO patterns, AI citation optimization
+- `knowledge/seo-geo-atlas-2026.md` -- SEO/GEO/AEO/LLM Visibility Atlas April 2026: Citation science, platform architecture, AI crawler configuration, LATAM GEO arbitrage, 90-day action plan. 2,221 lines from 7 independent research passes.

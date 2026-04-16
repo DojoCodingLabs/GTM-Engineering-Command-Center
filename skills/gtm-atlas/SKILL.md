@@ -70,6 +70,7 @@ When planning campaigns, creating copy, or recommending strategies, **always ref
 
 - `knowledge/gtm-creativity-atlas-2026.md` — Full GTM Creativity Atlas 2026: 130+ tactics, 15 sections, ethical ratings, tool directory
 - `knowledge/media-buying-atlas-2026.md` — Media Buying Atlas April 2026: Andromeda, Entity Clustering, ARM, EMQ, ASC+, Flood+Underbid, Tribe v2 Dead Zone Editing, TikTok/LinkedIn/X.com, 7-day playbook, ethical rankings. 1,337 lines from 13 primary research sources and $834M in analyzed ad spend.
+- `knowledge/seo-geo-atlas-2026.md` — SEO/GEO/AEO/LLM Visibility Atlas April 2026: Citation science, platform architecture, AI crawler configuration, LATAM GEO arbitrage, 90-day action plan. 2,221 lines from 7 independent research passes.
 
 ## Rules Files
 
