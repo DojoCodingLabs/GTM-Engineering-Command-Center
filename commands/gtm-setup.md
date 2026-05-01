@@ -280,26 +280,92 @@ Prompt the user for each credential. For each one, explain what it is, where to 
 
 ### 3.1 Meta Ads API
 
+The plugin uses the official **`meta ads` CLI** (Meta, April 2026) for all Meta operations. The setup wizard installs it automatically. Full reference: `skills/meta-ads/rules/ads-cli.md`.
+
+**Step A — Install the Ads CLI**
+
+Check if `meta` is already on PATH:
+
+```bash
+command -v meta >/dev/null 2>&1 && meta --version
+```
+
+If not installed, install via uv (preferred) or pip:
+
+```bash
+# Preferred — uv tool install
+command -v uv >/dev/null 2>&1 && uv tool install meta-ads || pip install meta-ads
+```
+
+If install fails, abort the Meta setup and tell the user: "Could not install `meta-ads`. Ensure Python 3.12+ and `uv` (or `pip`) are available, then re-run `/gtm-setup`." Skip §3.1 entirely if the user opts out.
+
+Record the installed version: `META_CLI_VERSION=$(meta --version | awk '{print $NF}')`.
+
+**Step B — Collect credentials**
+
 Ask for the following, one at a time:
 
-1. **Meta Access Token**
-   - "Enter your Meta Marketing API access token."
-   - "You can generate one at https://developers.facebook.com/tools/explorer/"
-   - "Select permissions: `ads_management`, `ads_read`, `pages_read_engagement`"
-   - Validate: Make a GET request to `https://graph.facebook.com/v21.0/me?access_token={token}` and check for a valid response with a user `name` and `id`.
+1. **Meta Access Token (System User token)**
+   - "Enter your Meta Marketing API System User access token."
+   - "Generate one at https://business.facebook.com → Business Settings → System Users → Add → Generate New Token"
+   - "Required scopes: `business_management`, `ads_management`, `pages_show_list`, `pages_read_engagement`, `pages_manage_ads`, `catalog_management`, `read_insights`"
 
 2. **Ad Account ID**
-   - "Enter your Meta Ad Account ID (format: act_XXXXXXXXX)"
-   - Validate: Make a GET request to `https://graph.facebook.com/v21.0/{ad_account_id}?fields=name,account_status&access_token={token}` and check `account_status` is 1 (ACTIVE).
+   - "Enter your Meta Ad Account ID (format: `act_XXXXXXXXX`)"
 
 3. **Pixel ID**
    - "Enter your Meta Pixel ID"
    - If detected in Phase 1, pre-fill: "Detected Pixel ID: {id} -- use this? (yes/no)"
-   - Validate: Make a GET request to `https://graph.facebook.com/v21.0/{pixel_id}?fields=name&access_token={token}`.
 
 4. **Page ID**
    - "Enter the Facebook Page ID for your ads"
-   - Validate: Make a GET request to `https://graph.facebook.com/v21.0/{page_id}?fields=name&access_token={token}`.
+
+5. **Instagram Actor ID** (optional but strongly recommended)
+   - "Enter your Instagram Business Account ID (used for Instagram placements)"
+
+6. **Business ID** (optional, needed for catalog/dataset operations)
+   - "Enter your Meta Business Manager ID"
+
+**Step C — Write `.env.gtm` and validate**
+
+Write secrets to `.env.gtm` (gitignored, separate from `.gtm/config.json`):
+
+```bash
+cat > .env.gtm << ENVEOF
+ACCESS_TOKEN='{collected_token}'
+AD_ACCOUNT_ID='{collected_ad_account_id}'
+BUSINESS_ID='{collected_business_id}'
+ENVEOF
+chmod 600 .env.gtm
+```
+
+Validate via the CLI (loads `.env.gtm` automatically):
+
+```bash
+meta auth status
+```
+
+If exit code is `3` or non-zero, the token is invalid or scopes are insufficient. Tell the user the specific scope/error and ask them to regenerate.
+
+Validate ad account access:
+
+```bash
+meta ads adaccount get "$AD_ACCOUNT_ID" --output json | jq '{name, account_status, currency, timezone_name}'
+```
+
+Verify `account_status` is 1 (ACTIVE).
+
+Validate pixel:
+
+```bash
+meta ads dataset get "$PIXEL_ID" --output json | jq '{name, id}'
+```
+
+Validate page (uses CLI's page list):
+
+```bash
+meta ads page list --output json | jq --arg pid "$PAGE_ID" '.[] | select(.id == $pid) | {name, id}'
+```
 
 ### 3.2 PostHog
 
@@ -403,11 +469,13 @@ Write `.gtm/config.json` with the collected values:
     "detected_integrations": ["posthog", "stripe", "supabase", "resend", "sentry"]
   },
   "meta": {
-    "access_token": "{collected}",
-    "ad_account_id": "{collected}",
+    "ad_account_id": "{collected — also written to .env.gtm}",
     "pixel_id": "{collected}",
     "page_id": "{collected}",
-    "api_version": "v21.0"
+    "instagram_actor_id": "{collected or null}",
+    "business_id": "{collected or null — also written to .env.gtm}",
+    "api_version": "v22.0",
+    "cli_version": "{detected from meta --version}"
   },
   "posthog": {
     "api_key": "{collected}",
@@ -461,11 +529,13 @@ Write `.gtm/config.json` with the collected values:
 
 ## Phase 5: Gitignore Safety
 
-1. Check the project root `.gitignore` for `.gtm/config.json` or `.gtm/` patterns.
-2. If `.gtm/config.json` is NOT in `.gitignore`:
-   - Add `.gtm/config.json` to the project root `.gitignore`.
-   - Tell the user: "Added `.gtm/config.json` to .gitignore to protect your API keys."
+1. Check the project root `.gitignore` for `.gtm/config.json`, `.env.gtm`, or `.gtm/` patterns.
+2. If any of these are missing:
+   - Add `.gtm/config.json`, `.env.gtm`, and `.env.gtm.local` to the project root `.gitignore`.
+   - Tell the user: "Added `.gtm/config.json` and `.env.gtm` to .gitignore to protect your API keys."
 3. Verify `.gtm/.gitignore` exists (from template) and includes `config.json`.
+
+**Why two files?** The Meta Ads CLI reads secrets from `.env.gtm` as environment variables (`ACCESS_TOKEN`, `AD_ACCOUNT_ID`, `BUSINESS_ID`). Non-secret IDs (pixel, page, IG actor) live in `.gtm/config.json` for agent introspection. Both files must be gitignored.
 
 ## Phase 6: Initial AARRR Funnel Health
 
@@ -516,6 +586,7 @@ Recommended First Action:
   Example: "Your Referral stage scores 0. Run /gtm-referral to design a referral program."
   Example: "You have Meta Ads configured but no campaigns. Run /gtm-plan to create your first media plan."
   Example: "Your SEO infrastructure is missing. Run /gtm-seo to audit and fix."
+  Example (commerce stack detected): "Stripe products detected. Run /gtm-catalog create '<brand>' to create a Meta product catalog and connect it to your pixel for catalog-based ads."
 
 All available commands:
   /gtm          -- Full lifecycle orchestrator
@@ -533,6 +604,7 @@ All available commands:
   /gtm-outreach -- Cold outreach sequences
   /gtm-referral -- Design referral program
   /gtm-experiment -- A/B experiment tracking
+  /gtm-catalog  -- Manage Meta product catalogs (Meta Ads CLI)
   /gtm-routines -- Set up automation
   /gtm-scrape   -- Community intelligence
   /gtm-animate  -- Video ad creation

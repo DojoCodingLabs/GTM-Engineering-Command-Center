@@ -1,11 +1,28 @@
 ---
 name: meta-ads
-description: Meta Ads API expertise — campaign structure, Advantage+ Creative, targeting, pixel/CAPI, Graph API patterns
+description: Meta Ads expertise — official `meta ads` CLI (April 2026), campaign structure, Advantage+ Creative, DCO via plural flags, targeting, pixel/CAPI, Graph API patterns for advanced fallbacks
 ---
 
 # Meta Ads API & Campaign Management
 
-Build, launch, and manage Meta advertising campaigns programmatically via the Graph API. This skill covers the full stack from campaign creation to conversion tracking.
+Build, launch, and manage Meta advertising campaigns programmatically. This skill covers the full stack from campaign creation to conversion tracking.
+
+## Default Tooling: `meta ads` CLI
+
+As of plugin v1.5.0, the **primary tool for all Meta Marketing API operations is the official `meta ads` CLI** (Meta, April 2026). Full reference: `rules/ads-cli.md`.
+
+**Use the CLI for:** campaigns, ad sets, ads, creatives (including DCO with plural flags), insights pulls, datasets/pixels, catalogs, account/page lookups.
+
+**Fall back to raw Graph API only for:**
+- Custom audiences (hashed lists), lookalikes
+- Interest/behavior targeting (`flexible_spec`)
+- Detailed age/gender targeting beyond country-level
+- ASC+ / Advantage+ Shopping advanced settings (`existing_customer_budget_percentage`)
+- Post ID relaunching (`effective_object_story_id`)
+- EMQ telemetry (`/{pixel_id}/events?fields=event_match_quality`)
+- Advanced `asset_feed_spec` JSON shapes the CLI's flags don't express
+
+The Graph API examples below in this skill remain valid as **conceptual reference** and **fallback patterns** for the items above. For routine deploy/insight work, prefer the CLI commands documented in `rules/ads-cli.md`.
 
 ## Campaign Hierarchy
 
