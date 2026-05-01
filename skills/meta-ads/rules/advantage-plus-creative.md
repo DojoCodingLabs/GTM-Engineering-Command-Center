@@ -2,7 +2,31 @@
 
 Advantage+ Creative lets Meta's algorithm test all combinations of your creative assets (images, headlines, body text, descriptions) and serve the best-performing combination to each user.
 
-## Required Setup
+## Preferred — `meta ads` CLI (plugin v1.5.0+)
+
+The official Meta `meta ads` CLI exposes Dynamic Creative via plural flags. **No `asset_feed_spec` JSON required** — the CLI builds the correct structure for you, auto-uploads images, and sets `is_dynamic_creative` automatically:
+
+```bash
+meta ads creative create \
+  --name "Dynamic Creative - Pain Angle" \
+  --page-id "$PAGE_ID" \
+  --instagram-actor-id "$INSTAGRAM_ACTOR_ID" \
+  --link-url "https://example.com/?utm_source=meta&utm_medium=paid" \
+  --images ./feed-1080x1080.png --images ./story-1080x1920.png \
+  --titles "Title 1" --titles "Title 2" --titles "Title 3" --titles "Title 4" --titles "Title 5" \
+  --bodies "Body 1" --bodies "Body 2" --bodies "Body 3" --bodies "Body 4" --bodies "Body 5" \
+  --descriptions "Desc 1" --descriptions "Desc 2" --descriptions "Desc 3" --descriptions "Desc 4" --descriptions "Desc 5" \
+  --call-to-actions SIGN_UP \
+  --output json
+```
+
+CLI limits: 10 images, 10 videos, 5 titles, 5 bodies, 5 descriptions. See `ads-cli.md` for the full reference and `campaign-operator.md` for the production deploy flow.
+
+## Raw Graph API — fallback for advanced shapes
+
+Use the raw API only when you need an `asset_feed_spec` shape the CLI's flags don't express (e.g., asset-level customization rules, complex `ad_formats` mixing, Post ID relaunching). The rest of this document describes that fallback path.
+
+## Required Setup (raw API path)
 
 ### Ad Set Level
 
