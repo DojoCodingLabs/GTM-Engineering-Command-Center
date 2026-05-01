@@ -2,6 +2,21 @@
 
 Every item on this list represents a real error encountered during development. Follow these rules to avoid hours of debugging.
 
+## CLI Migration Note (April 2026)
+
+As of plugin v1.5.0, the primary tool is the official **`meta ads` CLI** (see `ads-cli.md`). Many of the gotchas below are now **enforced by the CLI itself** when you use it instead of raw Graph API:
+
+| Gotcha | CLI handles it? |
+|---|---|
+| #1 — Always `asset_feed_spec` | ✅ Use plural flags `--bodies`, `--titles`, `--descriptions` on `meta ads creative create`; the CLI builds the correct structure |
+| #2 — Always `is_dynamic_creative: true` | ✅ Implicit when plural flags are used on `creative create` |
+| #3 — Upload images via `adimages` | ✅ `--image` / `--images <path>` auto-uploads from local files |
+| #4 — Never `image_url` in `link_data` | ✅ CLI rejects URLs — only file paths are accepted |
+
+**The gotchas remain authoritative for the raw-API fallback path** (custom audiences, lookalikes, ASC+ `existing_customer_budget_percentage`, Post ID relaunching, EMQ verification — see `ads-cli.md` §11 for the full list). Read this file when you're using `curl`; read `ads-cli.md` when you're using `meta ads`.
+
+---
+
 ## 1. Always asset_feed_spec, Never Single-Copy object_story_spec
 
 **Wrong:**

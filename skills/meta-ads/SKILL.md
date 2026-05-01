@@ -91,7 +91,9 @@ Every entity is created via `POST /<parent_id>/<edge>` and managed via `POST /<e
 
 ### Image Upload (Required Before Ad Creation)
 
-Images MUST be uploaded via the `adimages` endpoint to get an `image_hash`. Never use `image_url` in `link_data` -- it causes error 1443050.
+**Preferred — `meta ads` CLI:** image upload is implicit when you use `meta ads creative create --image <path>` or `--images <path>` (plural). The CLI auto-uploads local files to the ad account's image library and references the resulting hash internally. No separate upload step needed. See `rules/ads-cli.md`.
+
+**Fallback — raw Graph API:** for advanced creative shapes the CLI doesn't express (e.g., reusing the same `image_hash` across many ads built outside the CLI), upload via `adimages` to get a hash. Never use `image_url` in `link_data` -- it causes error 1443050.
 
 ```bash
 curl -F "filename=@square.jpg" \
