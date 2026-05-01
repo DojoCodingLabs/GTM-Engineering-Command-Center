@@ -21,14 +21,19 @@ This routine runs every day at 9:00 AM, automatically pulling metrics from all c
 ### Step 1: Pull Metrics
 
 Executes `/gtm-metrics --auto` which:
-1. Reads `.gtm/config.json` for configured channels
+1. Reads `.gtm/config.json` and `.env.gtm` for configured channels
 2. Pulls data from each configured source:
-   - **Meta Ads**: Account spend, campaign performance, ad-level metrics
+   - **Meta Ads**: via `meta ads insights get --no-input --output json` (CLI). Account spend, campaign performance, ad-level metrics
    - **Stripe**: MRR, new customers, churn, revenue
    - **Email**: Open rates, click rates, conversion rates per sequence
    - **PostHog**: Pageviews, signups, funnel completion by source
    - **Google Ads**: Spend, conversions, CPA (if configured)
 3. Saves unified snapshot to `.gtm/metrics/snapshot-{YYYY-MM-DD}.json`
+
+The Meta CLI's exit codes are honored at the routine level:
+- `0` — continue
+- `3` — token expired/invalid → emit a high-severity alert and skip Meta metrics for this run
+- `4` — Meta API error → backoff 30s, retry once; if still failing, emit a medium-severity alert and proceed without Meta metrics
 
 ### Step 2: Check Thresholds
 
@@ -133,10 +138,12 @@ By default, alerts are saved to `.gtm/routines/alerts/`. Optionally configure de
 
 ## Troubleshooting
 
-- **Meta token expired**: The routine will log an error and skip Meta metrics. Check `.gtm/routines/errors/` for details. Refresh your token and update `.gtm/config.json`.
+- **Meta `ACCESS_TOKEN` expired (CLI exit code 3)**: The routine logs an error, emits a high-severity alert, and skips Meta metrics. Refresh the System User token in Meta Business Manager and update `.env.gtm`. Validate with `meta auth status`.
+- **`meta: command not found`**: The Ads CLI is not installed. Run `/gtm-setup` to reinstall, or `uv tool install meta-ads` directly.
+- **Meta API error (CLI exit code 4)**: Routine retries once after 30s. If still failing, surfaces a medium-severity alert. Likely transient; investigate via `/gtm-metrics meta` interactively.
 - **Routine not running**: Verify with `/schedule list`. Check that the routine is enabled in config.
 - **Too many alerts**: Increase thresholds in `config.json` to reduce noise. Consider widening the rolling average window.
-- **Stale snapshots**: If snapshots stop appearing, check API connectivity and token validity.
+- **Stale snapshots**: If snapshots stop appearing, check `meta auth status` and other API health endpoints first.
 
 ## Related Commands
 

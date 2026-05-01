@@ -50,21 +50,32 @@ Select (1-4):
 
 ## Route A: Meta Ads Deployment
 
-### A.1: Validate Meta API Credentials
+This route delegates to the **`campaign-operator` agent**, which uses the official `meta ads` CLI for vanilla CRUD and falls back to raw Graph API only for advanced patterns (lookalikes, custom audiences, ASC+, Post ID relaunching, EMQ — see `agents/campaign-operator.md` for the full fallback list).
 
-- `meta.access_token` -- required
-- `meta.ad_account_id` -- required (must start with `act_`)
-- `meta.pixel_id` -- required for conversion campaigns
-- `meta.page_id` -- required for ad creation
-- `meta.api_version` -- use from config or default to `v21.0`
+Full CLI reference: `skills/meta-ads/rules/ads-cli.md`.
 
-Test the access token validity:
-- GET `https://graph.facebook.com/{api_version}/me?access_token={token}`
-- If it fails with error code 190 (expired token), tell the user: "Meta access token is expired. Generate a new one and update `.gtm/config.json`." STOP.
+### A.1: Validate Meta CLI + Credentials
 
-Verify ad account access:
-- GET `https://graph.facebook.com/{api_version}/{ad_account_id}?fields=name,account_status,currency,timezone_name&access_token={token}`
-- If `account_status` is not 1 (ACTIVE), warn the user.
+Configuration sources:
+- `.env.gtm` -- `ACCESS_TOKEN`, `AD_ACCOUNT_ID`, `BUSINESS_ID` (gitignored, secret)
+- `.gtm/config.json` -- `meta.pixel_id`, `meta.page_id`, `meta.instagram_actor_id`, `meta.cli_version` (non-secret IDs)
+
+Pre-flight:
+
+```bash
+# 1. CLI installed
+command -v meta >/dev/null 2>&1 || { echo "meta CLI not installed. Run /gtm-setup."; exit 1; }
+
+# 2. Token valid + scopes sufficient
+meta auth status
+[ $? -eq 3 ] && { echo "ACCESS_TOKEN invalid/expired. Refresh in Business Manager."; exit 3; }
+
+# 3. Ad account active
+meta ads adaccount get "$AD_ACCOUNT_ID" --output json | jq -e '.account_status == 1' >/dev/null \
+  || { echo "Ad account is not ACTIVE."; exit 1; }
+```
+
+If any check fails, **stop**. Surface the specific failure and instructions. Never attempt deploy with broken auth — the CLI returns exit code 3, but the agent should preempt that with a clear human-readable message.
 
 ### A.2: Load Campaign Plan and Creatives
 
@@ -74,70 +85,33 @@ Verify ad account access:
 4. Load approved creatives from the manifest (filter to `"approved": true`).
 5. Load copy from `.gtm/creatives/{campaign-name}/copy.md`.
 
-### A.3: Create Campaign
+### A.3: Deploy via campaign-operator
 
-POST to create the campaign:
-```
-POST https://graph.facebook.com/{api_version}/{ad_account_id}/campaigns
+Hand off to the `campaign-operator` agent. It executes the 4-call flow:
 
-Parameters:
-  name: {campaign_name from plan}
-  objective: {mapped Meta objective from plan}
-  status: PAUSED
-  special_ad_categories: [] (or appropriate category)
-  access_token: {token}
-```
+1. `meta ads campaign create` → `CAMPAIGN_ID`
+2. `meta ads adset create "$CAMPAIGN_ID"` → `ADSET_ID`
+3. `meta ads creative create` → `CREATIVE_ID` (image upload implicit)
+4. `meta ads ad create "$ADSET_ID" --creative-id "$CREATIVE_ID"` → `AD_ID`
 
-If using Campaign Budget Optimization (CBO):
-```
-  daily_budget: {total_daily_budget_in_cents}
-  bid_strategy: LOWEST_COST_WITHOUT_CAP
-```
+For each call, verify exit code:
+- `0` → continue
+- `3` → stop, surface auth-refresh guidance
+- `4` → backoff 30s, retry once, then stop
 
-Store the returned `campaign_id`.
+### A.4: Verify Deployment
 
-### A.4: Create Ad Sets
-
-For each ad set in the plan:
-```
-POST https://graph.facebook.com/{api_version}/{ad_account_id}/adsets
-
-Parameters:
-  name: {ad_set_name}
-  campaign_id: {campaign_id}
-  status: PAUSED
-  targeting: {from plan}
-  optimization_goal: {from plan}
-  billing_event: IMPRESSIONS
-  promoted_object: {pixel_id, custom_event_type}
-  access_token: {token}
+```bash
+meta ads campaign get "$CAMPAIGN_ID" --output json | jq .
+meta ads adset    get "$ADSET_ID"    --output json | jq .
+meta ads ad       get "$AD_ID"       --output json | jq .
 ```
 
-Search for interest targeting IDs if needed:
-```
-GET https://graph.facebook.com/{api_version}/search?type=adinterest&q={name}&access_token={token}
-```
+Confirm: status PAUSED, objective matches plan, ad set has `pixel_id` set, creative has 5/5/5 variations.
 
-### A.5: Upload Ad Images
+### A.5: Save Deployment Record
 
-For each approved image:
-```
-POST https://graph.facebook.com/{api_version}/{ad_account_id}/adimages
-```
-
-Store image hashes for creative creation.
-
-### A.6: Create Ad Creatives
-
-Create dynamic creatives using `asset_feed_spec` with uploaded images and copy variations.
-
-### A.7: Create Ads
-
-Create ads linking ad sets to creatives, all set to PAUSED.
-
-### A.8: Save Deployment Record
-
-Save to `.gtm/campaigns/{campaign-name}-{YYYY-MM-DD}.json` with all Meta IDs.
+Save to `.gtm/campaigns/{campaign-name}-{YYYY-MM-DD}.json` with all Meta IDs and `deployed_via: "meta-ads-cli"` plus `cli_version` from `.gtm/config.json`.
 
 ## Route B: Google Ads Deployment
 

@@ -12,13 +12,13 @@
 
 <p align="center">
   <a href="#installation"><img src="https://img.shields.io/badge/Claude_Code-Plugin-7C3AED?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6IiBmaWxsPSJ3aGl0ZSIvPjwvc3ZnPg==&logoColor=white" alt="Claude Code Plugin"></a>
-  <img src="https://img.shields.io/badge/version-1.3.0-C980FC?style=for-the-badge" alt="Version 1.3.0">
+  <img src="https://img.shields.io/badge/version-1.5.0-C980FC?style=for-the-badge" alt="Version 1.5.0">
   <img src="https://img.shields.io/badge/license-MIT-FF7151?style=for-the-badge" alt="MIT License">
   <img src="https://img.shields.io/badge/channels-7-07070E?style=for-the-badge" alt="7 Channels">
 </p>
 
 <p align="center">
-  <a href="#slash-commands">22 Commands</a> •
+  <a href="#slash-commands">23 Commands</a> •
   <a href="#agents">15 Agents</a> •
   <a href="#skills">16 Skills</a> •
   <a href="#routines">4 Cloud Routines</a> •
@@ -178,6 +178,7 @@ Then in your project:
 | `/gtm-referral` | Design and implement a referral program with K-factor projections |
 | `/gtm-experiment` | Structured A/B experiment tracking with statistical significance checks |
 | `/gtm-qa` | Autonomous QA — pixel verification, EMQ check, mobile testing, funnel walkthroughs |
+| `/gtm-catalog` | Create and manage Meta product catalogs; connect to pixels for product-level conversion tracking (uses official `meta ads` CLI) |
 
 ### Utility Commands
 
@@ -218,7 +219,7 @@ Then in your project:
 
 | Skill | Domain | Key April 2026 Knowledge |
 |-------|--------|--------------------------|
-| `meta-ads` | Meta Ads API | **Andromeda, Entity Clustering, ARM, EMQ 8+, ASC+, Creative Fatigue Indicator, Attribution Upheaval, Post ID relaunching** |
+| `meta-ads` | Meta Ads API + `meta ads` CLI | **Andromeda, Entity Clustering, ARM, EMQ 8+, ASC+, Creative Fatigue Indicator, Attribution Upheaval, Post ID relaunching, native CLI integration (April 2026)** |
 | `google-ads` | Google Ads | Performance Max, AI Max, Demand Gen, Shopping feed optimization, AI Overviews |
 | `email-marketing` | Email drips | Deliverability (SPF/DKIM/DMARC), provider APIs (Resend/SendGrid/Postmark) |
 | `seo-engineering` | SEO/GEO | Technical SEO, content strategy, schema markup, AI citation optimization |
@@ -233,9 +234,10 @@ Then in your project:
 | `browser-qa` | QA verification | Playwright patterns, Computer Use, verification checklists |
 | `neuro-testing` | Brain prediction | Brain region mapping, ROI extraction, score interpretation, dead zone editing, setup guide |
 
-**Plus 2 deep-dive rule files:**
+**Plus 3 deep-dive rule files:**
 - `andromeda-2026.md` — Full Andromeda mechanics: Entity Clustering, ARM pipeline, EMQ, lifecycle compression, $834M impact study
 - `flood-underbid.md` — The contrarian $0 testing method from $80M+ operators
+- `ads-cli.md` — Official Meta `meta ads` CLI reference: install, auth via `ACCESS_TOKEN` env var, command catalog, DCO via plural flags, exit codes, fallback list for raw Graph API
 
 ---
 
@@ -378,7 +380,7 @@ AARRR Funnel Health:
 | Requirement | Details |
 |---|---|
 | **Claude Code** | Latest version with plugin support |
-| **Meta Ads** | Optional — System User token from live-mode Business app |
+| **Meta Ads** | Optional — System User token from live-mode Business app. Plugin auto-installs the official `meta ads` CLI (`pip install meta-ads`) during `/gtm-setup`. |
 | **Google Ads** | Optional — Customer ID + developer token |
 | **TikTok Ads** | Optional — Business account for Spark Ads |
 | **PostHog** | Optional — Project + Personal API keys for diagnostics |

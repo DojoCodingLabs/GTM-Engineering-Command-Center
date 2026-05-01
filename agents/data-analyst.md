@@ -19,56 +19,74 @@ Read `.gtm/config.json` to get:
 
 ### Step 2: Pull Meta Ads Metrics
 
-Use the Meta Graph API to pull campaign, ad set, and ad level metrics:
+Use the **`meta ads insights get`** CLI for all Meta data pulls. The CLI handles auth (`ACCESS_TOKEN` env var), pagination, and JSON formatting. Full reference: `skills/meta-ads/rules/ads-cli.md`.
 
 **Campaign-Level Insights:**
 ```bash
-curl -s -G "https://graph.facebook.com/v22.0/${AD_ACCOUNT_ID}/insights" \
-  --data-urlencode "access_token=${TOKEN}" \
-  --data-urlencode "fields=campaign_name,campaign_id,objective,impressions,clicks,spend,cpc,cpm,ctr,actions,cost_per_action_type,conversions,conversion_values,purchase_roas" \
-  --data-urlencode "level=campaign" \
-  --data-urlencode "date_preset=last_7d" \
-  --data-urlencode "time_increment=1" | jq .
+meta ads insights get \
+  --date-preset last_7d \
+  --time-increment daily \
+  --fields campaign_name,campaign_id,objective,impressions,clicks,spend,cpc,cpm,ctr,actions,cost_per_action_type,conversions,conversion_values,purchase_roas \
+  --output json | jq .
 ```
+
+The CLI defaults to campaign-level rollups when no `--adset-id` / `--ad-id` filter is passed and no breakdown forces a deeper grain. For explicit campaign filtering, add `--campaign-id <ID>`.
 
 **Ad Set-Level Insights:**
 ```bash
-curl -s -G "https://graph.facebook.com/v22.0/${AD_ACCOUNT_ID}/insights" \
-  --data-urlencode "access_token=${TOKEN}" \
-  --data-urlencode "fields=adset_name,adset_id,impressions,clicks,spend,cpc,cpm,ctr,actions,cost_per_action_type,frequency,reach" \
-  --data-urlencode "level=adset" \
-  --data-urlencode "date_preset=last_7d" \
-  --data-urlencode "time_increment=1" | jq .
+meta ads insights get \
+  --campaign-id "$CAMPAIGN_ID" \
+  --date-preset last_7d \
+  --time-increment daily \
+  --fields adset_name,adset_id,impressions,clicks,spend,cpc,cpm,ctr,actions,cost_per_action_type,frequency,reach \
+  --output json | jq .
 ```
 
 **Ad-Level Insights (Creative Performance):**
 ```bash
-curl -s -G "https://graph.facebook.com/v22.0/${AD_ACCOUNT_ID}/insights" \
-  --data-urlencode "access_token=${TOKEN}" \
-  --data-urlencode "fields=ad_name,ad_id,impressions,clicks,spend,cpc,cpm,ctr,actions,cost_per_action_type,video_avg_time_watched_actions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p100_watched_actions" \
-  --data-urlencode "level=ad" \
-  --data-urlencode "date_preset=last_7d" \
-  --data-urlencode "time_increment=1" | jq .
+meta ads insights get \
+  --adset-id "$ADSET_ID" \
+  --date-preset last_7d \
+  --time-increment daily \
+  --fields ad_name,ad_id,impressions,clicks,spend,cpc,cpm,ctr,actions,cost_per_action_type,video_avg_time_watched_actions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p100_watched_actions \
+  --output json | jq .
 ```
 
-**Breakdown by Age, Gender, Placement:**
+**Breakdown by Age and Gender:**
 ```bash
-curl -s -G "https://graph.facebook.com/v22.0/${AD_ACCOUNT_ID}/insights" \
-  --data-urlencode "access_token=${TOKEN}" \
-  --data-urlencode "fields=impressions,clicks,spend,cpc,actions,cost_per_action_type" \
-  --data-urlencode "level=campaign" \
-  --data-urlencode "date_preset=last_7d" \
-  --data-urlencode "breakdowns=age,gender" | jq .
+meta ads insights get \
+  --date-preset last_7d \
+  --breakdown age --breakdown gender \
+  --fields impressions,clicks,spend,cpc,actions,cost_per_action_type \
+  --output json | jq .
 ```
 
 **Placement Breakdown:**
 ```bash
-curl -s -G "https://graph.facebook.com/v22.0/${AD_ACCOUNT_ID}/insights" \
-  --data-urlencode "access_token=${TOKEN}" \
-  --data-urlencode "fields=impressions,clicks,spend,cpc,actions,cost_per_action_type" \
-  --data-urlencode "level=campaign" \
-  --data-urlencode "date_preset=last_7d" \
-  --data-urlencode "breakdowns=publisher_platform,platform_position" | jq .
+meta ads insights get \
+  --date-preset last_7d \
+  --breakdown publisher_platform --breakdown platform_position \
+  --fields impressions,clicks,spend,cpc,actions,cost_per_action_type \
+  --output json | jq .
+```
+
+**Sorting (top performers):**
+```bash
+meta ads insights get \
+  --campaign-id "$CAMPAIGN_ID" \
+  --date-preset last_7d \
+  --sort spend_descending \
+  --output json | jq '.[0:10]'
+```
+
+**Exit code handling:**
+```bash
+meta ads insights get ... > /tmp/insights.json
+case $? in
+  0) ;;  # continue
+  3) echo "ERROR: ACCESS_TOKEN expired. Refresh and re-run."; exit 3 ;;
+  4) sleep 30; meta ads insights get ... > /tmp/insights.json || { echo "Persistent API error"; exit 4; } ;;
+esac
 ```
 
 ### Step 3: Pull PostHog Metrics

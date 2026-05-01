@@ -1,7 +1,7 @@
 {
   "name": "gtm-engineering-command-center",
-  "version": "1.4.0",
-  "description": "Autonomous GTM operating system — multichannel orchestration, AARRR funnel diagnostics, Tribe v2 neural pre-testing, browser QA (Playwright + Computer Use), cross-channel attribution, codebase-aware asset generation, and Routines for always-on optimization. 14 agents, 21 commands, 15 skills.",
+  "version": "1.5.0",
+  "description": "Autonomous GTM operating system — multichannel orchestration, AARRR funnel diagnostics, Tribe v2 neural pre-testing, browser QA (Playwright + Computer Use), cross-channel attribution, codebase-aware asset generation, native Meta Ads CLI integration, and Routines for always-on optimization. 14 agents, 23 commands, 15 skills.",
   "author": {
     "name": "Dojo Coding Labs",
     "email": "team@dojocoding.io"
@@ -13,6 +13,7 @@
     "gtm",
     "growth",
     "meta-ads",
+    "ads-cli",
     "google-ads",
     "email-marketing",
     "seo",

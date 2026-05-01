@@ -13,45 +13,68 @@ You are the data-analyst agent. You will pull performance data from all configur
 1. Read `.gtm/config.json` in the project root.
    - If the file does not exist, tell the user: "GTM Command Center is not set up. Run `/gtm-setup` first." Then STOP.
 2. Determine which data sources are configured:
-   - `meta.access_token` + `meta.ad_account_id` -> Meta Ads insights available
+   - `.env.gtm` contains `ACCESS_TOKEN` + `AD_ACCOUNT_ID` AND `meta` CLI on PATH -> Meta Ads insights available
    - `posthog.personal_api_key` + `posthog.project_id` -> PostHog analytics available
    - `stripe.secret_key` -> Stripe revenue data available
    - `email.api_key` + `email.provider` -> Email metrics available
    - `google_ads.customer_id` -> Google Ads insights available
-3. Test each configured API's connectivity.
+3. Test each configured API's connectivity (Meta: `meta auth status`; PostHog/Stripe/etc.: respective health endpoints).
 4. If `--auto` flag is present (routine mode): skip interactive prompts, pull all available data, save snapshot, check thresholds, and output alerts only.
 5. Load existing deployment records from `.gtm/campaigns/` to know which campaigns to query.
    - If no deployment records exist, query accounts directly for all active/recent campaigns.
 
 ## Phase 1: Pull Meta Ads Insights
 
-If Meta Ads is configured:
+If Meta Ads is configured, use the **`meta ads insights get`** CLI. The CLI handles auth, pagination, and JSON formatting. Full reference: `skills/meta-ads/rules/ads-cli.md`.
 
 ### 1.1: Account-Level Overview
 
-```
-GET https://graph.facebook.com/{api_version}/{ad_account_id}/insights
-  ?fields=spend,impressions,clicks,cpc,cpm,ctr,actions,cost_per_action_type,conversions,purchase_roas
-  &date_preset=last_7d
-  &access_token={token}
+```bash
+meta ads insights get \
+  --date-preset last_7d \
+  --fields spend,impressions,clicks,cpc,cpm,ctr,actions,cost_per_action_type,conversions,purchase_roas \
+  --output json
 ```
 
 ### 1.2: Campaign-Level Breakdown
 
+```bash
+meta ads insights get \
+  --date-preset last_7d \
+  --fields campaign_id,campaign_name,spend,impressions,clicks,cpc,cpm,ctr,actions,cost_per_action_type,conversions \
+  --output json
 ```
-GET https://graph.facebook.com/{api_version}/{ad_account_id}/insights
-  ?fields=campaign_id,campaign_name,spend,impressions,clicks,cpc,cpm,ctr,actions,cost_per_action_type,conversions
-  &level=campaign
-  &date_preset=last_7d
-  &filtering=[{"field":"campaign.delivery_info","operator":"IN","value":["active","completed","recently_completed"]}]
-  &access_token={token}
+
+To filter to active/recent campaigns only, post-filter the JSON with `jq` (the CLI does not yet expose a `--filtering` flag for delivery status):
+
+```bash
+meta ads insights get ... --output json | jq '[.[] | select(.spend != null and (.spend | tonumber) > 0)]'
 ```
 
 ### 1.3: Ad Set and Ad Level Breakdowns
 
-Pull per-campaign ad set and ad level metrics for detailed analysis.
+```bash
+# Per ad set
+meta ads insights get --campaign-id "$CAMPAIGN_ID" --date-preset last_7d --output json
 
-### 1.4: Parse Actions
+# Per ad (creative performance)
+meta ads insights get --adset-id "$ADSET_ID" --date-preset last_7d \
+  --fields ad_name,ad_id,impressions,clicks,spend,cpc,ctr,actions,video_p25_watched_actions,video_p100_watched_actions \
+  --output json
+```
+
+### 1.4: Exit Code Handling (especially in `--auto` / routine mode)
+
+```bash
+meta ads insights get ... --output json > /tmp/insights.json
+case $? in
+  0) ;;
+  3) echo "ALERT: ACCESS_TOKEN expired"; exit 3 ;;
+  4) sleep 30; meta ads insights get ... --output json > /tmp/insights.json || { echo "Persistent API error"; exit 4; } ;;
+esac
+```
+
+### 1.5: Parse Actions
 
 Extract from Meta's action arrays:
 - `link_click`, `landing_page_view`, `lead`, `purchase`
