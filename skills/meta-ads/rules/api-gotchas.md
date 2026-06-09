@@ -15,6 +15,8 @@ As of plugin v1.5.0, the primary tool is the official **`meta ads` CLI** (see `a
 
 **The gotchas remain authoritative for the raw-API fallback path** (custom audiences, lookalikes, ASC+ `existing_customer_budget_percentage`, Post ID relaunching, EMQ verification — see `ads-cli.md` §11 for the full list). Read this file when you're using `curl`; read `ads-cli.md` when you're using `meta ads`.
 
+> **Companion:** `graph-api-field-guide.md` covers the ad-set/campaign field layer this file doesn't — probe techniques to self-discover any endpoint's schema (`validate_only` + bogus-value enum harvesting), the field immutability map (`attribution_spec` is NOT editable post-create — error 1504040), API-vs-UI silent default differences (attribution windows, Advantage+ creative features, destination_type, locales), and the API-level diagnostics toolkit.
+
 ---
 
 ## 1. Always asset_feed_spec, Never Single-Copy object_story_spec

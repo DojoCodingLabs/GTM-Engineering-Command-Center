@@ -351,3 +351,5 @@ Meta redefined attribution in March 2026:
 - `rules/advantage-plus-creative.md` -- Dynamic creative API format + Entity Clustering warnings
 - `rules/pixel-setup.md` -- Pixel and CAPI implementation
 - `rules/api-gotchas.md` -- Common API errors and fixes
+- `rules/ads-cli.md` -- Official `meta ads` CLI reference (primary tool as of v1.5.0)
+- `rules/graph-api-field-guide.md` -- Probe-verified raw-API creation surface: enum-harvesting techniques, field immutability map (attribution_spec!), API-vs-UI default traps, status model, diagnostics toolkit, pre-flight checklist
