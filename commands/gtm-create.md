@@ -165,7 +165,16 @@ Save all copy variations to `.gtm/creatives/{campaign-name}/copy.md`.
 ### A.6: Review and Output
 
 Present all creatives organized by angle. For each, ask: "Keep, modify, or discard?"
-Mark approved creatives in the manifest. Suggest: "Run `/gtm-deploy` to push to Meta Ads."
+Mark approved creatives in the manifest.
+
+### A.7: Pre-Flight Gate (before deploy)
+
+Before handing off to `/gtm-deploy`, run the unified pre-flight gate on the approved creatives:
+
+1. Run `/gtm-validate` (surface `ad_creative`; surface `offer` if an offer stack was created). It blends **neuro** (attention/memory) with **SDV** (purchase intent/price/objections) into one verdict per concept: **DEPLOY / TEST / ITERATE / SKIP**, plus a **lever** (visual vs offer).
+   - Neuro is **optional**: when Meta Tribe v2 is absent or disallowed, the gate degrades cleanly to an **SDV-only** verdict — say so and proceed. Never block on neuro.
+2. Apply the gate: **only DEPLOY / TEST verdicts proceed to `/gtm-deploy`.** ITERATE / SKIP concepts loop back to creation with their lever (visual -> fix the creative; offer -> fix the offer/proof) and are NOT deployed.
+3. Suggest: "Pre-flight passed -- run `/gtm-deploy` to push the validated creatives to Meta Ads."
 
 ## Route B: Email Templates
 
@@ -222,6 +231,7 @@ Approved: {N}/{total}
 
 Next:
 - {Appropriate next command based on asset type}
+- For ad creatives/offers: `/gtm-validate` (pre-flight gate) -> only DEPLOY/TEST verdicts proceed to `/gtm-deploy`
 ```
 
 ## Error Handling

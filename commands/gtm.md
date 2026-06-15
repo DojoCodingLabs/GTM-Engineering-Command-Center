@@ -184,6 +184,18 @@ Execute the outreach-operator agent logic (equivalent to `/gtm-outreach`):
 4. Ask: **"Approve these assets? (approve all / select / redo {channel})"**
    - Do NOT proceed until assets are approved.
 
+## Phase 4.5: Pre-Flight Gate (Create -> Deploy)
+
+1. Announce: "**Phase 4.5: Pre-Flight Gate** -- Validating created assets before any spend."
+2. Run `/gtm-validate` on the approved creatives and offers (equivalent to the unified pre-flight gate). It blends **neuro** (attention/memory) with **SDV** (purchase intent/price/objections) into one verdict per concept: **DEPLOY / TEST / ITERATE / SKIP**, plus a **lever** (visual vs offer) for anything below threshold.
+   - Surface `ad_creative` for ad images/copy; surface `offer` for offer stacks (runs the price test); surface `copy` for landing/headline copy. Never mix surfaces in one run.
+   - Neuro is **optional**: when Meta Tribe v2 is absent or disallowed, the gate degrades cleanly to an **SDV-only** verdict — announce this and proceed. Never block on neuro.
+3. Present the ranked pre-flight table (verdict + lever per concept), leading with the comparative ranking.
+4. Apply the gate: **only DEPLOY / TEST verdicts proceed to Phase 5.** ITERATE / SKIP concepts loop back to Phase 4 with their lever (visual -> fix the creative; offer -> fix the offer/proof) and are NOT deployed.
+5. Ask: **"Pre-flight complete. Proceed to deployment with the passing concepts? (yes / iterate {concept} / override)"**
+   - If "iterate": return to Phase 4 for the flagged concepts.
+   - If "override": note that a below-threshold concept is being force-promoted and record the override.
+
 ## Phase 5: Deployment (PAUSED by Default)
 
 1. Announce: "**Phase 5/7: Deployment** -- Deploying approved assets. All deployments are PAUSED until you confirm."

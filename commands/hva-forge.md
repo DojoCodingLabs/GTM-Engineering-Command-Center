@@ -29,12 +29,13 @@ Write `.gtm/hva/{campaign}/creatives/manifest.json` — one entry per concept:
                     "proof":"founder-demo", "format":"VSL", "creator_style":"founder-direct",
                     "objection":"is-it-real", "demo_angle":"one-click-setup" },
     "entity_diversity_note": "distinct persona + format vs. batchmates" }
+  // after Phase 3, the gate writes back: "neuro_score?", "sdv_score?", "validate_verdict?"
 ] }
 ```
 The tags are what let the Desk attribute a win to an *angle* and the Vault breed families. A win with no tagged hypothesis is a number; with one it is a lesson.
 
-## Phase 3 — Pre-test (optional but recommended)
-Offer to run `/gtm-neurotest` on the batch to kill weak concepts before they cost a dollar. Record each concept's `neuro_score` back into the manifest. Below-threshold concepts are flagged for iteration, not deployed.
+## Phase 3 — Pre-flight gate (the unified gate)
+Run `/gtm-validate` on the batch (surface `ad_creative`) to kill weak concepts before they cost a dollar. The gate blends **neuro** (attention/memory — optional, degrades to SDV-only when Tribe v2 is absent) with **SDV** (purchase intent/price/objections) into one verdict: **DEPLOY / TEST / ITERATE / SKIP**. Record each concept's `neuro_score?`, `sdv_score?`, and `validate_verdict?` back into the manifest. Only **DEPLOY** / **TEST** verdicts proceed to Phase 4; **ITERATE** / **SKIP** concepts are flagged for iteration with the gate's lever (visual vs offer), not deployed.
 
 ## Phase 4 — Handoff
-Report the batch as a table (slug, hook, format, proof, neuro score) and confirm diversity coverage across the taxonomy. The batch is now ready for deployment as **one concept per ad, ≤5 ads in one funded ad set** (the HVA Structure shape — see `rules/guardrails.md` G10). Point the operator at `/gtm-deploy` (campaign-operator) for the PAUSED deploy, then `/hva-review` to start reading.
+Report the batch as a table (slug, hook, format, proof, validate verdict, neuro/sdv score) and confirm diversity coverage across the taxonomy. The batch is now ready for deployment as **one concept per ad, ≤5 ads in one funded ad set** (the HVA Structure shape — see `rules/guardrails.md` G10). Point the operator at `/gtm-deploy` (campaign-operator) for the PAUSED deploy, then `/hva-review` to start reading.

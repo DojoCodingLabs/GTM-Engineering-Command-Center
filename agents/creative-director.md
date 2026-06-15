@@ -91,6 +91,14 @@ Description 5: [Social proof snippet]
 
 These 5x5x5 combinations feed into Meta's dynamic creative optimization (DCO), which automatically tests all combinations and finds the best performers.
 
+**Pre-rank the copy by SDV before forging image assets.** Image generation is the expensive step — don't spend it on copy the persona won't buy. Before Step 4, you MAY rank the 5x5x5 text variations (primary text, headlines, descriptions) on the copy construct subset — comprehension, believability, appeal, purchase_intent:
+
+```
+/gtm-validate "headline 1" "headline 2" ... --surface copy
+```
+
+This returns a ranked table with a verdict per variant (DEPLOY / TEST / ITERATE / SKIP) and a lever (the weakest construct). Forge images around the DEPLOY/TEST copy and the highest comprehension/believability variants; loop ITERATE/SKIP copy back through Step 3 with the lever before committing any Gemini spend. Near-identical variants returned as an unstable tie are kept as distinct DCO entries, not collapsed into a false winner.
+
 ### Step 4: Generate Ad Images
 
 You MUST generate BOTH aspect ratios for every creative:
@@ -200,6 +208,10 @@ Append to the file, never overwrite existing entries. This builds a library of p
   2. Messaging: 4-5 different pain points or benefits
   3. Hook: Cover all 6 categories (Problem-aware, Benefit-led, Social proof, Direct offer, Curiosity, Comparison)
   4. Format: Mix of static (60-70% of conversions per Pilothouse), UGC video, carousel, meme/absurd, VSL
+
+**Seed the levers from the persona substrate, not ad-hoc strings.** The persona and visual-diversity levers (faces, ages, ethnicities, environments, and the pain points / benefits they map to) seed from the persona substrate at `.gtm/personas/` — the same panel the demand-forecaster scores against. Read the persona files first; let each persona drive a distinct human representation and its lived pain point, instead of inventing personas inline. This keeps the Entity-ID diversity grounded in the audience SDV actually forecasts for.
+
+**Turn mined objections into new creative angles.** The B0/B1/B2 objections mined by the demand-forecaster (per `skills/synthetic-demand/rules/objection-mining.md`, routed from `/gtm-validate`) become new creative angles whose entire job is to **answer the objection**. A B0 demand-blocker ("too expensive to justify", "won't work for my stack") is the strongest source of a contrarian hook or a proof-led creative — each surviving objection earns at least one creative that names it and dismantles it. This is how the messaging lever stays anchored to real demand friction rather than guesswork.
 
 ## The 6 Hook Categories
 Every creative batch must include at least one creative from each:

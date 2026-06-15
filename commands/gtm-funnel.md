@@ -201,6 +201,32 @@ REFERRAL:
   [ ] No referral tracking
 ```
 
+## Phase 4.5: Surface SDV Demand Blockers
+
+The gaps above are **funnel/page/tracking** problems — mechanics. A stage can also leak because the
+**OFFER** has a demand blocker, not because the page is slow. Surface those alongside the AARRR gaps so
+the two never get confused.
+
+1. Read all `.gtm/sdv/forecasts/*.forecast.yml`. From each, extract `top_objections[]` — every entry is a
+   B-tier blocker (`blocker_tier` = B0/B1/B2) with a `revenue_at_risk` and a `suggested_fix`.
+2. Map each blocker onto the AARRR stage it lands on (price → Revenue; proof → Activation/Revenue; risk →
+   Revenue; fit → Acquisition; low urgency → Retention) per
+   `skills/funnel-diagnostics/rules/revenue-at-risk.md`.
+3. Surface the blockers **beside** each stage's mechanical gaps, ranked B0 above B1 above B2:
+
+```
+REVENUE  [======================]  65/100
+  Plumbing gap: No free-to-paid tracking
+  Demand blocker [B0]: "too expensive for what it does" -- $X at risk -- remedy: re-price to WTP band
+  Demand blocker [B1]: "not sure it'll work for my use case" -- $X at risk -- remedy: show proof
+```
+
+No naming collision: **F** = fidelity tier (F0–F3, how grounded the forecast is), **B** = blocker tier
+(B0/B1/B2, how hard the objection blocks the sale), and the five **AARRR stages** are a separate axis
+again — a B-tier blocker *lands on* a stage, it does not rename it. Below F3, label the `revenue_at_risk`
+dollars **directional**. If no forecasts exist, note "No SDV demand data — run `/gtm-validate`" and
+surface plumbing gaps only.
+
 ## Phase 5: Save Funnel Snapshot
 
 Create the `.gtm/funnel/` directory if it does not exist.
@@ -295,15 +321,16 @@ Present the funnel visualization to the user with health scores and the top 3 re
 ```
 AARRR Funnel Map Complete -- {date}
 
-| Stage       | Score | Events Found | Critical Gaps |
-|-------------|-------|-------------|---------------|
-| Acquisition | 72    | 5           | CAPI missing |
-| Activation  | 58    | 3           | No completion tracking |
-| Retention   | 35    | 1           | No email sequences |
-| Revenue     | 65    | 4           | No upgrade tracking |
-| Referral    | 12    | 0           | No referral program |
+| Stage       | Score | Events Found | Critical Gaps | Demand Blocker |
+|-------------|-------|-------------|---------------|----------------|
+| Acquisition | 72    | 5           | CAPI missing | — |
+| Activation  | 58    | 3           | No completion tracking | B1: "unsure it works" |
+| Retention   | 35    | 1           | No email sequences | — |
+| Revenue     | 65    | 4           | No upgrade tracking | B0: "too expensive" ($X) |
+| Referral    | 12    | 0           | No referral program | — |
 
 Total events discovered: 42 across 4 tracking sources
+Demand blockers (SDV): {N} B-tier objections mapped onto stages above (F = fidelity, B = blocker — separate from AARRR stages)
 
 Top 3 priorities:
 1. Add retention email sequences (Retention +20 pts est.)
@@ -314,7 +341,8 @@ Funnel saved: .gtm/funnel/funnel-{date}.json
 Funnel map: .gtm/funnel/funnel-{date}.md
 
 Next:
-- Run /gtm-diagnose for full bottleneck analysis with revenue impact
+- Run /gtm-diagnose for full bottleneck analysis with revenue impact (emits the ranked revenue-at-risk ledger)
+- Run /gtm-validate to generate SDV demand forecasts if none exist (so leaks can be attributed to the offer)
 - Run /gtm-email to create retention email sequences
 - Run /gtm-referral to design a referral program
 ```

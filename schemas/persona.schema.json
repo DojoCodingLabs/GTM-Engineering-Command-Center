@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/DojoCodingLabs/gtm-engineering-command-center/schemas/persona.schema.json",
+  "title": "GTM Persona",
+  "description": "A GTM-native synthetic persona — the shared substrate behind 'build the persona once, consume everywhere'. One JSON file per persona, stored at `.gtm/personas/<id>.json`. This is the GTM-minimal projection of the richer SRD persona (re-themed down from `.context/srd-source/schemas/persona.schema.yml` to the 9 SDV-relevant fields, plus optional skepticism). Product-internal SRD fields — lifecycle, primary_journeys, churn_risk_moments, scores, conversion_trigger — are intentionally TRIMMED; this substrate exists to feed demand and targeting, not to model the product. The SDV panel (the demand-forecaster agent / `skills/synthetic-demand/`) is the primary consumer: the presence of personas here promotes an SDV run from F0 cold-start to F1 persona-grounded (see `skills/synthetic-demand/rules/fidelity-tiers.md`). Media buying (lookalike seeds, PostHog cohorts, interest stacks) and email marketing (segment objections + price tolerance) consume the same objects. NEVER write SRD's schema from GTM; if an external `srd/personas.yml` exists, read it and project DOWN into this shape (read-only).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "age",
+    "income",
+    "location",
+    "goals",
+    "pain_points",
+    "monthly_spend",
+    "user_pct",
+    "revenue_pct",
+    "price_sensitivity"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable persona ID, format 'P01', 'P02', ... Sequential, unique within `.gtm/personas/`. Matches the filename (`.gtm/personas/<id>.json`) and the IDs referenced by SDV concepts (`target_segments`), media-buyer seeds, and email segments.",
+      "pattern": "^P[0-9]{2,}$"
+    },
+    "age": {
+      "type": "integer",
+      "description": "A specific age, not a range — picks the central buyer for this segment.",
+      "minimum": 13,
+      "maximum": 120
+    },
+    "income": {
+      "type": "string",
+      "description": "Monthly income with currency, e.g. '$800/month'. Free-text so regional currencies (LATAM, etc.) survive the projection."
+    },
+    "location": {
+      "type": "string",
+      "description": "'City, Country' format, e.g. 'Bogota, Colombia'. Used for ad geo-targeting and to flag out-of-distribution / regional-pricing surfaces in SDV (a low familiarity_score widens the bands)."
+    },
+    "goals": {
+      "type": "string",
+      "description": "What this persona wants to achieve with the product. Feeds SDV appeal/comprehension priming and email value framing."
+    },
+    "pain_points": {
+      "type": "string",
+      "description": "Frustrations with current alternatives — the demand the product addresses. Seeds SDV objection mining and email/ad pain-led hooks."
+    },
+    "monthly_spend": {
+      "type": "string",
+      "description": "Typical monthly spend in this category (dollar amount or range), e.g. '$50-$120'. A budget-salience anchor for the SDV skeptic stance and for offer/price tolerance reads."
+    },
+    "user_pct": {
+      "type": "number",
+      "description": "Share of the total user base this persona represents, as a percentage (0-100). Across ALL personas in `.gtm/personas/`, user_pct SHOULD sum to approximately 100% (see consistency notes). Used to volume-weight the SDV panel and size addressable audiences.",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "revenue_pct": {
+      "type": "number",
+      "description": "Share of total revenue this persona represents, as a percentage (0-100). Across ALL personas in `.gtm/personas/`, revenue_pct SHOULD sum to approximately 100% (see consistency notes). Used to revenue-weight comparative rankings and to size objection revenue-at-risk (`segment.revenue_pct x target MRR`).",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "price_sensitivity": {
+      "type": "string",
+      "description": "How much price moves this persona's purchase decision. Primes the SDV price test (Van Westendorp / Gabor-Granger) and email price-tolerance enrichment. Defaults to 'medium' when unknown.",
+      "enum": ["low", "medium", "high"],
+      "default": "medium"
+    },
+    "skepticism": {
+      "type": "string",
+      "description": "Optional. How resistant this persona is to marketing claims. Primes the SDV skeptic stance (an anti-positivity defense). When omitted, the SDV panel applies the default skeptic stance ('medium') — this substrate never makes a respondent more credulous than the skeptic baseline.",
+      "enum": ["low", "medium", "high"],
+      "default": "medium"
+    }
+  }
+}

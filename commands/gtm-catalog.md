@@ -130,6 +130,25 @@ The Ads CLI **does not yet** expose `product-item` commands as of April 30, 2026
 
 When `meta ads product-item create` ships in a future CLI release, this command will grow a `/gtm-catalog sync` subcommand that pulls products from Stripe (or other detected commerce sources) and pushes them to the connected Meta catalog.
 
+## Related GTM disciplines & optional interop
+
+Beyond Meta catalogs, the Command Center carries native demand-side disciplines worth surfacing here:
+
+- **Synthetic Demand Validation (SDV) is now a native discipline** — `skills/synthetic-demand/`. It
+  pre-tests ad creatives, offers, and landing copy for purchase intent, price tolerance, and objections
+  *before* spend, returning a comparative ranking (the headline signal) plus a fidelity-tier-gated
+  forecast. Governing law: **rank, don't score; never ask a synthetic respondent for a number.** Fidelity
+  tiers are F0–F3; objection blockers are B0/B1/B2. Run it via `/gtm-validate` (blended with neuro) or read
+  `skills/synthetic-demand/SKILL.md`.
+
+- **Optional SRD interop surface** — `skills/synthetic-demand/rules/srd-interop.md`. If both an
+  `srd-framework` plugin and a project `srd/` directory are present (read-only detection), SDV *may* read
+  `srd/personas.yml` (projected to the 9-field GTM persona panel) and, at F3, SRD conversion pairs for
+  calibration — and *may* expose a thin one-way adapter SRD can read. **GTM owns its outputs and never
+  depends on SRD:** it emits its own objection ledger to `.gtm/sdv/revenue-at-risk.md`, never writes into
+  SRD's `gap-audit` format, and never reimplements SRD's journeys/gap-audit/guardian. With SRD absent, an
+  identical SDV run completes on `.gtm/` alone.
+
 ## Error Handling
 
 - **`meta: command not found`** — Run `/gtm-setup`.

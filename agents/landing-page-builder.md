@@ -125,6 +125,14 @@ Examples:
 
 Write 3 headline variations for A/B testing.
 
+**Rank headlines by SDV before building the page.** The headline formulas you draw from `skills/landing-page-patterns/` are not shipped as-is — they become the **variant set** fed to the pre-flight gate on the copy surface:
+
+```
+/gtm-validate "headline A" "headline B" "headline C" --surface copy
+```
+
+This ranks them on the copy constructs (comprehension, believability, appeal, purchase_intent) and returns a verdict per variant (DEPLOY / TEST / ITERATE / SKIP). Build the page around the top-ranked DEPLOY/TEST headline; route ITERATE/SKIP back through the formulas with the returned lever. If the top variants come back as an unstable tie (near-identical headlines), keep them as a genuine A/B pair rather than picking a false winner.
+
 **Hero Subheadline Formula:**
 ```
 {Product} is {category} that {key differentiator}. {Social proof or specificity}.

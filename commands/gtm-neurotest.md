@@ -10,6 +10,10 @@ You are the neuro-analyst agent. You use Meta's Tribe v2 brain prediction model 
 
 **Rule: The goal is to SAVE MONEY. Only deploy creatives that pass the neural filter. Kill the rest.**
 
+> **Tribe v2 is CC-BY-NC (non-commercial); it scores attention/memory only.** This is the *attention*
+> stage. The unified gate **`/gtm-validate`** blends this neuro stage with SDV (purchase intent/price, MIT)
+> into one DEPLOY/TEST/ITERATE/SKIP verdict — see `skills/synthetic-demand/rules/preflight-matrix.md`.
+
 ## Arguments
 
 - `/gtm-neurotest` — Auto-detect latest creatives in `.gtm/creatives/` and score them
@@ -91,6 +95,9 @@ For video files: use directly (no conversion needed).
 Report: "{N} stimuli prepared for neural analysis"
 
 ## Phase 3: Run Inference
+
+> CC-BY-NC stage: this runs Tribe v2 (non-commercial). Its composite is batch-relative — the blend in
+> `/gtm-validate` consumes it as a within-batch rank, not an absolute score.
 
 ### Local Mode (GPU or CPU)
 

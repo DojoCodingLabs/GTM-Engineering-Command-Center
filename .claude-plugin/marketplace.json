@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "gtm-engineering-command-center",
-  "version": "1.8.0",
-  "description": "Autonomous GTM operating system. 15 agents, 28 commands, 16 skills, 5 cloud routines. Multichannel orchestration (Meta Ads + Google Ads at parity), AARRR funnel diagnostics, Tribe v2 neural pre-testing, the High-Velocity Advertising (HVA) engine for creative discovery at machine speed (CLEAR + deterministic scorer + the Vault moat), browser QA (Playwright + Computer Use), cross-channel attribution, codebase-aware asset generation, and always-on optimization via Claude Code Routines.",
+  "version": "1.14.0",
+  "description": "Autonomous GTM operating system. 16 agents, 30 commands, 17 skills, 5 cloud routines. Multichannel orchestration (Meta Ads + Google Ads at parity), AARRR funnel diagnostics, Tribe v2 neural pre-testing, Synthetic Demand Validation (SDV) for science-backed demand/price/objection pre-testing with a unified neuro+SDV pre-flight gate and Van Westendorp/Gabor-Granger pricing, the High-Velocity Advertising (HVA) engine for creative discovery at machine speed (CLEAR + deterministic scorer + the Vault moat), browser QA (Playwright + Computer Use), cross-channel attribution, codebase-aware asset generation, and always-on optimization via Claude Code Routines.",
   "owner": {
     "name": "Dojo Coding Labs",
     "email": "team@dojocoding.io"
@@ -10,8 +10,8 @@
   "plugins": [
     {
       "name": "gtm-engineering-command-center",
-      "description": "Autonomous GTM operating system — 15 agents, 28 commands, 16 skills. Multichannel orchestration (Meta Ads + Google Ads at parity), AARRR funnel diagnostics, Tribe v2 neural pre-testing, the High-Velocity Advertising (HVA) engine (CLEAR + deterministic scorer + the Vault moat), browser QA, cross-channel attribution, codebase-aware asset generation, and cloud Routines.",
-      "version": "1.8.0",
+      "description": "Autonomous GTM operating system — 16 agents, 30 commands, 17 skills. Multichannel orchestration (Meta Ads + Google Ads at parity), AARRR funnel diagnostics, Tribe v2 neural pre-testing, Synthetic Demand Validation (SDV) for demand/price/objection pre-testing with a unified neuro+SDV pre-flight gate and pricing science, the High-Velocity Advertising (HVA) engine (CLEAR + deterministic scorer + the Vault moat), browser QA, cross-channel attribution, codebase-aware asset generation, and cloud Routines.",
+      "version": "1.14.0",
       "author": {
         "name": "Dojo Coding Labs",
         "email": "team@dojocoding.io"

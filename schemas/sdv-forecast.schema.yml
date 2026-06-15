@@ -1,0 +1,124 @@
+# SDV Forecast Schema (GTM Command Center)
+# A "forecast" is the OUTPUT of a Synthetic Demand Validation run. Every file written to
+# .gtm/sdv/forecasts/<concept-id>.forecast.yml MUST conform to this structure.
+# All fields required unless marked (optional). Read alongside sdv-concept.schema.yml and the
+# synthetic-demand skill rules. The deterministic verdict math is scripts/sdv-score.py.
+#
+# Governing law: "Rank, don't score. Never ask a synthetic respondent for a number."
+
+forecast:
+  concept_id: string            # Matches concept.id this forecast answers
+  generated_date: string        # ISO date: "2026-06-14"
+  plugin_version: string        # GTM Command Center version, e.g. "1.8.0"
+  surface: string               # "ad_creative" | "offer" | "copy" (matches the concept)
+
+  # --- Honesty header: how much to trust this forecast (see rules/fidelity-tiers.md) ---
+  fidelity_tier: string         # "F0" | "F1" | "F2" | "F3"
+                                #   F0 cold-start (zero-shot, ranking-only, directional)
+                                #   F1 persona-grounded (.gtm/personas/ or srd/personas.yml)
+                                #   F2 data-anchored (anchors/behavior from real customer text)
+                                #   F3 outcome-calibrated (Meta CVR / Stripe / PostHog map; evidence floor)
+  directional: boolean          # true whenever fidelity_tier != "F3" (no absolute go/no-go)
+  ssr_mode: boolean             # true if embeddings-backed SSR was used; false = prompt-only FLR
+  familiarity_score: number     # 0.0-1.0 — model prior for this buyer/category; low => wider CIs + caveat
+  confidence_caveats: string    # Plain-language statement of what NOT to over-read (incl. OOD note < F3)
+
+  panel:
+    source: string              # "gtm_personas" | "srd_personas" | "generated"
+    size: number                # Number of synthetic respondents polled
+    samples_per_respondent: number # Repeat samples per persona (>=3)
+    segments: string[]          # Persona IDs / segment labels actually polled
+
+  # --- Per-variant results ---
+  variants:
+    - id: string                # Matches a concept variant id ("V1")
+      label: string
+
+      constructs:               # One entry per construct measured (see rules/construct-battery.md)
+        - name: string          # "purchase_intent" | "appeal" | ...
+          mean: number          # Mean on the 1-5 Likert scale
+          distribution: number[] # pmf over Likert points [p1..p5]; length 5, sums ~1.0, NOT one-hot
+          ci_low: number        # Lower CI bound on the mean
+          ci_high: number       # Upper CI bound on the mean
+          n_effective: number   # Effective sample size
+          # --- §4 elicitation provenance (the scorer rejects readings missing/violating these) ---
+          elicitation_method: string   # "FLR" | "SSR"  (never "DLR" as a primary signal)
+          react_call_saw_scale: boolean # MUST be false — free-text reaction did not see the Likert scale
+          map_call_separate: boolean    # MUST be true  — mapping to a pmf happened in a separate call
+          anchors_data_derived: boolean # (optional) true if anchors came from real customer language (F2)
+
+      weights_used: object      # construct -> weight actually applied (so demand_score is reproducible)
+      demand_score_relative: number   # 0-100 composite, present below F3 ("uncalibrated — directional only")
+      demand_score_calibrated: number # 0-100, present ONLY at F3 with a valid evidence-floor map
+
+      comparative:              # PRIMARY signal (see rules/comparative-scaling.md)
+        instrument: string      # "best_worst" | "win_rate" | "bradley_terry"
+        best_worst_share: number # -1.0..+1.0 (may be null in single mode)
+        win_rate: number        # 0.0-1.0 (optional)
+        rank: number            # 1 = strongest variant in the set
+
+      verdict: string           # "DEPLOY" | "TEST" | "ITERATE" | "SKIP" (DEPLOY only at F3 + stable winner)
+      autonomy_action: string   # "recommend-deploy" | "recommend-archive" | "auto-archive" | "hold"
+
+      # --- §7 auditable anti-positivity defenses (missing ones derate confidence) ---
+      priming:
+        skeptic_stance_applied: boolean
+        budget_salience_applied: boolean
+        do_nothing_option_present: boolean
+        comparative_mode: boolean
+      confidence_warnings: string[]  # Emitted by the scorer when a defense is missing
+
+      willingness_to_pay:       # (optional) present when price_test ran (offer surface, Phase 3)
+        method: string          # "van_westendorp" | "gabor_granger"
+        currency: string
+        opp: number             # Optimal/revenue-max price
+        ipp: number             # (optional) Indifference Price Point (VW)
+        acceptable_range: number[] # [floor, ceiling]
+        demand_curve:
+          - price: number
+            pi_mean: number     # Mean purchase intent at this price (1-5)
+            est_conversion: number # 0.0-1.0 (calibrated at F3, modeled below — label it)
+
+      top_objections:           # Structured (see rules/objection-mining.md) -> GTM revenue-at-risk ledger
+        - segment: string
+          objection: string
+          severity: string      # "high" | "medium" | "low"
+          frequency: number     # 0.0-1.0 share of the segment raising it
+          blocker_tier: string  # "B0" | "B1" | "B2"
+          revenue_at_risk: number # segment.revenue_pct x target MRR
+          suggested_fix: string
+
+      top_drivers:
+        - segment: string
+          driver: string
+          strength: string      # "high" | "medium" | "low"
+
+  # --- §6 rank stability (a real estimate, not a one-resample coin flip) ---
+  rank_stability:
+    status: string              # "stable" | "unstable" | "indeterminate" (indeterminate if < 5 resamples)
+    n_resamples: number         # MUST be >= 5 for a "stable"/"unstable" judgment
+    top_hold_fraction: number   # Fraction of resamples whose #1 matched the modal #1
+    mean_kendall_tau: number    # Mean pairwise rank correlation across resamples
+
+  # --- How the numbers were grounded ---
+  calibration_metadata:
+    detected_capabilities: string[] # ["gtm_personas","stripe","posthog","meta_cli","embeddings","reviews"]
+    synthetic_to_actual_map: string # Description of the fitted map, or "none (zero-shot)"
+    evidence_floor_met: boolean     # §5 — true only when enough paired observations justify an absolute verdict
+    intent_behavior_discount: number # Multiplier intent -> est. action (<= 1.0; == 1.0 only at F3 past the floor)
+
+  ci_width: number              # Relative CI width from rules/fidelity-tiers.md (wider for lower tier)
+  recommended_action: string    # The decision this forecast supports (lead with the ranking)
+
+# Consistency rules:
+# - Every variant.id MUST exist in the matching concept's variants; all share one surface.
+# - Each construct.distribution: length 5, sums ~1.0 (+/- 0.02), NOT near one-hot (max point < 0.95).
+# - ci_low <= mean <= ci_high for every construct.
+# - demand_score (relative or calibrated) is reproducible from construct means x weights_used.
+# - demand_score_calibrated present ONLY when fidelity_tier == "F3" AND evidence_floor_met == true.
+#   Below F3, only demand_score_relative is present and directional == true.
+# - Lower fidelity_tier => WIDER ci_width (F0 widest). A sub-F3 forecast claiming an absolute go/no-go is invalid.
+# - rank_stability.status == "stable" REQUIRES n_resamples >= 5; an unstable/indeterminate top is a tie, never a winner.
+# - No DEPLOY verdict unless fidelity_tier == "F3", evidence_floor_met, and the variant is the stable #1.
+# - willingness_to_pay present => the concept declared a price_test with a matching method (surface == offer).
+# - intent_behavior_discount == 1.0 only when F3 calibration error is within tolerance; otherwise < 1.0.

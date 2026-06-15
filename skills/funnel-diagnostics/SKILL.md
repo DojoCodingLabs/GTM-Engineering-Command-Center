@@ -67,6 +67,13 @@ The stage with the largest gap between actual and benchmark performance is the b
 
 Each bottleneck has specific diagnostic patterns. See the bottleneck-patterns rule file.
 
+### Step 6: Separate Demand Blockers from Plumbing Leaks
+
+A stage can leak because the OFFER has a demand blocker, not because the page is slow. Map the SDV
+B-tier demand blockers (B0/B1/B2) onto the AARRR stages and emit a ranked revenue-at-risk ledger. See the
+revenue-at-risk rule file. (F = fidelity tier of the forecast, B = blocker tier — separate from the AARRR
+stages.)
+
 ## Data Sources for Diagnosis
 
 | Data Source | What It Provides | Key Signals |

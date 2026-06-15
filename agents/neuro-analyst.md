@@ -80,6 +80,13 @@ For text/copy: convert to audio first using TTS, then process as audio stimulus.
 
 ### Step 4: Run Tribe v2 Inference
 
+> **Tribe v2 is CC-BY-NC (non-commercial).** It scores **attention/memory only**, and its composite is
+> **batch-relative** (min-max normalized across the batch) — *not* a stable per-creative absolute. The
+> pre-flight gate consumes it as a **within-batch rank**, never as a score (see
+> `skills/synthetic-demand/rules/preflight-matrix.md` §2). The MIT/SDV demand path runs **independently**
+> and never imports this code. This analyst now feeds **`/gtm-validate`** as the *attention half* of the
+> unified gate; SDV supplies the demand half and the blend is a decision matrix, not an average.
+
 **Local Mode:**
 ```python
 from tribev2 import TribeModel
