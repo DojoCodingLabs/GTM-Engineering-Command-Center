@@ -162,6 +162,77 @@ Run after `/gtm-deploy` creates Meta/Google Ads campaigns.
   → Assert: image data returned (not empty or error)
 ```
 
+#### Google Ads Compliance & Consistency Check
+
+Run for Google Ads campaigns deployed via `/gtm-deploy`. Posture = **neutral-with-scores**: this check FLAGS and SCORES policy/claims risk (WARN, never auto-block) and FAILs only on three objective **structural facts**. The operator decides on WARNs — we surface the risk and the score, not a verdict. This respects the project's neutral-documentation ethic: we do not censor copy, we make the risk legible. Reads use the read-only `google-ads-open-cli` (reference: `skills/google-ads/rules/gads-cli.md`); this agent never mutates.
+
+**C.1 Policy trigger scan — RSA headlines/descriptions (WARN + score, NOT a block)**
+
+Read the deployed RSA assets from the deploy record (or pull live: `google-ads-open-cli ads <cid> --campaign <campaign_id>` then `ad <cid> <agid> <adid>`). Scan each headline and description against the Google policy-sensitive categories (Atlas Part VIII for RSA construction, Part X/XIII for the policy surface). Emit a **0-10 score per category** where 10 = clean, 0 = egregious. Any score below 8 is a **WARN**, never a FAIL.
+
+| Category | What to flag | Example trigger |
+|----------|--------------|-----------------|
+| Unproven superlatives | "best", "#1", "guaranteed", "fastest" with no on-page proof/citation | "The #1 way to scale" |
+| Health / financial / get-rich (info-products) | income, weight-loss, medical, or "get rich" claims | "Make $10k/mo", "lose 20lbs" |
+| Misleading urgency | fake scarcity/countdown not backed by real inventory/deadline | "Only 2 spots left" (evergreen) |
+
+```
+→ For each RSA asset string:
+  → Regex/keyword match against each category's trigger lexicon
+  → Score 0-10 per category (deductions per hit, weighted by severity)
+  → category score < 8 → WARN row with the offending string + score
+→ This is a recognition aid. Do NOT delete or rewrite copy. Recommend only.
+```
+**GRAYHAT | 5/10** — Aggressive unproven superlatives and evergreen-urgency copy ride Google's unenforced edges; allowed until a reviewer or claims-policy sweep catches them, so watch for policy drift.
+
+**C.2 Claims / disclaimer check — info-products (WARN + recommend, NOT delete)**
+
+For info-product offers (course/coaching/community — detect from campaign label or offer config), an earnings/results claim without a "results vary / not guaranteed" disclaimer is the exact trigger for Google's Misrepresentation / Unreliable-Claims enforcement (Atlas Part X).
+
+```
+→ Detect earnings/results language in RSA assets AND on the final URL page text
+  (reuse Landing URL machinery from 3.7: fetch page, scan rendered text)
+→ If results/earnings claim present:
+  → Assert a disclaimer ("results vary", "not guaranteed", "not typical") appears
+    in the same asset set or on the landing page
+  → Missing → WARN: "earnings claim without results-vary disclaimer"
+→ Recommend adding the bold disclaimer. Do NOT strip the claim.
+```
+**BLACKHAT | 1/10** — *Documented so you recognize it — never deploy.* Get-rich-quick / guaranteed-income / absolute-transformation claims violate the unreliable-claims policy and trigger immediate bans and consumer harm. The QA WARN exists to catch the lawful gray copy *before* it drifts into this bucket.
+
+**C.3 Brand-exclusion verification — STRUCTURAL FACT → FAIL if missing**
+
+Verifies the operator's Atlas Law 2/3 requirement actually landed: every non-brand and automated (PMax/AI Max) ad group must exclude brand terms, or branded demand backfills reported conversions and mis-teaches Smart Bidding (Atlas Part II).
+
+```
+→ Read the brand-term list + intended exclusions from the deploy record
+→ Pull live negatives: google-ads-open-cli negative-keywords <cid> --format compact
+  → (capture stderr; non-zero + /auth|token|credential|unauthenticated|permission/i
+     → tell operator to re-run `google-ads-open-cli auth login`; else backoff + 1 retry)
+→ For each non-brand / PMax / AI Max ad group in the deploy record:
+  → Assert every brand term is present as a negative (campaign- or account-level
+    negative list, or PMax brand exclusion)
+  → Missing brand exclusion on a non-brand/automated ad group → FAIL
+```
+**WHITEHAT | 9/10** — Asserting brand exclusions actually landed keeps automated campaigns from harvesting cheap brand demand; transparent budget control, safe to enforce hard.
+
+**C.4 Tracking-template / final-URL consistency — STRUCTURAL FACT → FAIL on mismatch**
+
+A `trackingUrlTemplate` whose display path resolves to a **different destination domain** than `finalUrls` is exactly Google's destination-mismatch / cloaking disapproval trigger (Atlas Part XIII: tracking templates that fail to match the final URL are an egregious, no-warning enforcement bucket). Reuse the existing Landing URL machinery (3.7): follow the resolved URL, expect HTTP 200, and assert same registrable domain.
+
+```
+→ Read trackingUrlTemplate + finalUrls from the deploy record (or live:
+  google-ads-open-cli ad <cid> <agid> <adid>)
+→ Resolve the tracking template's effective destination (substitute {lpurl},
+  follow redirect chain) → final landing domain D_track
+→ Take finalUrls[0] → registrable domain D_final
+→ curl -I / Playwright-navigate the resolved URL:
+  → Assert HTTP 200 (not 404, not redirect loop) — reuse 3.7 checks
+  → Assert D_track == D_final (same registrable domain)
+  → Domain mismatch OR broken/non-200 final URL → FAIL
+```
+**WHITEHAT | 9/10** — Enforcing display-vs-final domain parity is pure policy hygiene; it prevents the cloaking disapproval and protects the account, no downside.
+
 ---
 
 #### QA Suite: Email Deployment
@@ -238,11 +309,21 @@ After running all applicable suites, generate a structured report:
 | Mobile (375px) | WARN | CTA below fold on iPhone SE |
 | UTM Tracking | PASS | All params captured |
 | Performance | PASS | LCP 1.2s, TTFB 340ms |
+| Policy scan (RSA) | WARN | Superlatives 6/10, urgency 5/10, health/financial 10/10 |
+| Claims disclaimer | WARN | Earnings claim, no "results vary" disclaimer |
+| Brand exclusion | PASS | Brand terms excluded on all non-brand/PMax ad groups |
+| Tracking/final-URL | PASS | Display + final URL same domain, HTTP 200 |
 
 ### Issues Found
 1. **WARN** — CTA button below fold on 375px viewport
    - Impact: Mobile users may not see CTA without scrolling
    - Fix: Move CTA above the hero image on mobile breakpoint
+2. **WARN** — RSA superlatives score 6/10 (Atlas Part VIII/X)
+   - Impact: "#1" / "best" without on-page proof risks a claims-policy sweep
+   - Fix (recommend, operator decides): add a sourced proof point or soften copy
+3. **WARN** — Earnings claim lacks "results vary / not guaranteed" disclaimer (Atlas Part X)
+   - Impact: Misrepresentation / Unreliable-Claims trigger for info-products
+   - Fix (recommend, do NOT delete the claim): add a bold disclaimer to asset + landing page
 
 ### Screenshots
 - Desktop: .gtm/qa/desktop.png
@@ -259,6 +340,17 @@ Based on QA results:
 - **All PASS**: Report success, deployment is verified
 - **WARN only**: Report warnings with fixes, deployment OK but improvements recommended
 - **Any FAIL**: Report failures, recommend NOT activating campaign/page until fixed. Provide specific fix instructions.
+
+**Google Ads — what counts as a FAIL vs a WARN.** Only the **three structural facts** block:
+
+| Check | Verdict on problem |
+|-------|--------------------|
+| C.3 Brand exclusion missing on non-brand/PMax ad group | **FAIL** (structural — Atlas Law 2/3) |
+| C.4 Tracking-template vs final-URL domain mismatch, OR final URL not HTTP 200 | **FAIL** (structural — cloaking/destination-mismatch) |
+| C.1 Policy trigger scan (superlatives/health-financial/urgency) | **WARN + score** — never blocks |
+| C.2 Earnings/results claim missing disclaimer | **WARN + recommend** — never deletes copy |
+
+This honors the project's neutral-documentation ethic: we **flag and score** policy/claims risk and leave the call to the operator; we **hard-FAIL only on objective structural facts** (missing brand exclusion, broken final URL, cloaking domain mismatch) that the operator's own Atlas rules require.
 
 ## Autonomous Blocker Resolution
 
