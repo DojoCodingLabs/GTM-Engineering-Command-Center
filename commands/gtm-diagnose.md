@@ -17,7 +17,8 @@ You are the funnel-diagnostician agent. You will read all available data sources
 4. Read `.gtm/learnings/` directory for accumulated insights.
 5. Read `.gtm/MEMORY.md` for historical context.
 6. Read `.gtm/experiments/` for any active or completed experiment results.
-7. Load product context from `config.product` (name, pricing, target audience).
+7. Read all `.gtm/sdv/forecasts/*.forecast.yml` — extract each forecast's `top_objections[]` (B-tier demand blockers: `blocker_tier` B0/B1/B2, `revenue_at_risk`, `suggested_fix`) and its `fidelity_tier`. These are DEMAND-side blockers (the offer), distinct from the funnel/page/tracking bottlenecks the metrics reveal.
+8. Load product context from `config.product` (name, pricing, target audience).
 
 If fewer than 2 data sources have data, warn: "Limited data available. Diagnosis will rely on qualitative signals. Run `/gtm-metrics` and `/gtm-funnel` first for a more accurate diagnosis."
 
@@ -188,6 +189,28 @@ For the identified bottleneck, dig deeper:
 - If MER 0.2-0.5: healthy — focus on scaling
 - If MER <0.2: very efficient — consider increasing budget to capture more market share
 
+### Demand Blocker Check (the offer, not the plumbing)
+
+A stage can leak because the **OFFER** has a demand blocker, not because the page is slow. The AARRR
+scores above measure funnel/page/tracking mechanics; the SDV `top_objections[]` measure the offer.
+Surface them alongside the scored bottleneck so the two diagnoses don't get confused. Follow
+`skills/funnel-diagnostics/rules/revenue-at-risk.md`.
+
+1. From the `top_objections[]` you read in Phase 1, map each B-tier blocker onto the AARRR stage it lands
+   on (price → Revenue; proof/believability → Activation/Revenue; risk → Revenue; fit → Acquisition; low
+   urgency → Retention).
+2. **For the bottleneck stage specifically: is the leak demand or plumbing?** If a B0/B1 blocker sits on
+   it, the offer is at least partly responsible — don't prescribe only an engineering fix. If there's no
+   B-tier blocker, it's mechanics (broken event, slow page, dead CAPI) — fix the plumbing.
+3. Emit a ranked **revenue-at-risk ledger** to `.gtm/sdv/revenue-at-risk.md`: B0 above B1 above B2, each
+   tier sorted by `revenue_at_risk` (= `segment.revenue_pct × target_MRR`) descending, each row carrying
+   stage, $ at risk, the objection, its verbatim, and a remedy (add a guarantee / show proof / re-price
+   per `skills/synthetic-demand/rules/price-sensitivity.md`).
+4. No naming collision: **F** = fidelity tier (F0–F3), **B** = blocker tier (B0/B1/B2), the AARRR stages
+   are separate. Below F3, label `revenue_at_risk` **directional**, not measured.
+
+If no SDV forecasts exist, note "No demand data — leaks attributed to mechanics only. Run `/gtm-validate`."
+
 ## Phase 5: Prescribe Top 3 Actions
 
 For each of the top 3 recommended actions, provide:
@@ -241,16 +264,18 @@ Present the complete diagnosis:
 ```
 AARRR Funnel Diagnosis -- {date}
 
-| Stage       | Score | Health | Key Metric |
-|-------------|-------|--------|------------|
-| Acquisition | 85    | Good   | 10K visitors/wk |
-| Activation  | 62    | Fair   | 25% signup rate |
-| Retention   | 38    | Poor   | 8% DAU/MAU |    <-- BOTTLENECK
-| Revenue     | 48    | Fair   | 8% free-to-paid |
-| Referral    | 22    | Critical | K=0.02 |
+| Stage       | Score | Health | Key Metric | Demand Blocker (SDV) |
+|-------------|-------|--------|------------|----------------------|
+| Acquisition | 85    | Good   | 10K visitors/wk | — |
+| Activation  | 62    | Fair   | 25% signup rate | B1: "unsure it works" |
+| Retention   | 38    | Poor   | 8% DAU/MAU | — |    <-- BOTTLENECK (plumbing: no retention emails)
+| Revenue     | 48    | Fair   | 8% free-to-paid | B0: "too expensive" ($X) |
+| Referral    | 22    | Critical | K=0.02 | — |
 
-Primary Bottleneck: RETENTION (score: 38/100)
+Primary Bottleneck: RETENTION (score: 38/100) — plumbing leak (no B-tier blocker, fix mechanics)
 Estimated Revenue Leak: $X/month
+Top demand blocker: B0 "too expensive" on Revenue — $X at risk — remedy: re-price (see ledger)
+(F = fidelity tier of the forecast, B = demand-blocker tier — separate from the AARRR stages)
 
 Top 3 Actions:
 1. {action} -- Expected: +$X/month [Effort: Low, Timeline: 1 week]
@@ -258,8 +283,10 @@ Top 3 Actions:
 3. {action} -- Expected: +$X/month [Effort: High, Timeline: 1 month]
 
 Diagnosis saved: .gtm/funnel/diagnosis-{date}.json
+Revenue-at-risk ledger: .gtm/sdv/revenue-at-risk.md (B-tier demand blockers ranked by $ at risk)
 
-Next: Run the recommended /gtm-{command} to address the bottleneck.
+Next: Run the recommended /gtm-{command} to address the bottleneck. If the leak is a demand blocker (not
+plumbing), the remedy is on the offer — guarantee / proof / re-price — not the page.
 ```
 
 ## Error Handling

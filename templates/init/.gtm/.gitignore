@@ -13,4 +13,9 @@ hva/**/*.png
 hva/**/*.jpg
 hva/**/reads/snapshot-*.json
 
+# SDV raw reaction dumps and embedding caches (noisy/large).
+# Keep forecasts, anchors, and calibration pairs — that data grounds future runs.
+sdv/**/reactions-*.json
+sdv/**/embeddings-cache.json
+
 # Everything else is safe to commit

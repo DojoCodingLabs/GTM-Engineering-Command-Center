@@ -4,6 +4,17 @@ GTM Engineering Command Center — Neural Creative Scorer
 Uses Meta's Tribe v2 to predict brain response to ad creatives.
 Outputs JSON with ROI scores for each creative.
 
+LICENSE BOUNDARY: Meta's Tribe v2 model is CC-BY-NC (non-commercial). This file is the ONLY
+place that imports it (`from tribev2 import TribeModel`, below). The MIT/commercial parts of
+this plugin — scripts/sdv-score.py, scripts/preflight-score.py, scripts/ssr_embed.py, and the
+synthetic-demand skill — must never import this module; the unified pre-flight gate composes
+this scorer's JSON OUTPUT off disk, never its code. Keep the boundary clean.
+
+NOTE: the composite below is min-max normalized ACROSS the batch (normalize_scores), so a
+single creative's composite is RAW/uninterpretable and a batch composite is only meaningful
+RELATIVELY. preflight-score.py therefore consumes this as a within-batch rank, never an
+absolute. Do not treat the 0-100 composite as a stable per-creative property.
+
 Usage:
     python neuro-score.py --input creative1.png creative2.png --cache-dir .gtm/models/tribev2/
     python neuro-score.py --input video_ad.mp4 --output scores.json

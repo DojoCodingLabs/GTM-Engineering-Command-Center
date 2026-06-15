@@ -531,6 +531,20 @@ Write `.gtm/config.json` with the collected values:
     "scale_bid_cap_multiple": 0.7,
     "max_daily_budget_increase_pct": 20
   },
+  "sdv": {
+    "autonomy": "recommend",
+    "ssr_mode": "auto",
+    "anchor_ensemble_size": 4,
+    "samples_per_respondent": 3,
+    "min_resamples": 5,
+    "deploy_threshold": 70.0,
+    "test_threshold": 55.0,
+    "iterate_threshold": 40.0
+  },
+  "personas": {
+    "source": "auto",
+    "panel_size": "auto"
+  },
   "stack": {
     "auth": "{detected}",
     "database": "{detected}",
@@ -543,6 +557,8 @@ Write `.gtm/config.json` with the collected values:
 ```
 
 **`targets` + `hva` blocks (for the High-Velocity Advertising engine).** `targets.target_cpa` is your CPA/CAC goal in account currency — set it if you intend to run `/hva`, because CLEAR-E and the Read Ladder are spend-relative to it (the HVA Desk scorer refuses to run without it). `targets.primary_event` is the qualifying CAPI conversion; `targets.micro_events` are the leading micro-conversions. The `hva` block defaults to the safest autonomy mode (`recommend` — recommend-only, no unattended writes); the operator raises it to `cut-auto` or `full-auto` deliberately once they trust the loop. If the user is not setting up paid advertising now, leave `target_cpa` as `null` — `/hva` Phase 0 will prompt for it later. See `skills/high-velocity-advertising/SKILL.md`.
+
+**`sdv` + `personas` blocks (for Synthetic Demand Validation).** These are additive and optional — they do not change the config schema version (still `2.0`). The `sdv` block configures the demand pre-flight: `autonomy` defaults to the safest `recommend` mode; `ssr_mode: "auto"` upgrades free-text→Likert mapping to embeddings-backed SSR when an `OPENAI_API_KEY`/`SDV_EMBEDDINGS_API_KEY` is present and falls back to FLR cleanly otherwise; `min_resamples` (5) is the floor for a "stable" comparative ranking; the thresholds are the DEPLOY/TEST/ITERATE/SKIP cutoffs read by `scripts/sdv-score.py`. The `personas` block controls the synthetic panel (`source: "auto"` reads `.gtm/personas/`, or an external `srd/personas.yml` if present, else generates a lightweight panel). Nothing here stores secrets. See `skills/synthetic-demand/SKILL.md`.
 
 ## Phase 5: Gitignore Safety
 

@@ -98,10 +98,17 @@ curl -s -G "https://api.stripe.com/v1/subscriptions" \
 - Check PostHog for referral events if they exist
 - Note whether a referral program exists at all -- absence is itself a finding
 
-**8. Reference Frameworks:**
+**8. SDV Demand Blockers (the offer, not the plumbing):**
+- Read ALL files in `.gtm/sdv/forecasts/*.forecast.yml` (use Glob)
+- From each forecast, extract the `top_objections[]` array — each entry carries `segment`, `objection`, `severity`, `frequency`, `blocker_tier` (B0/B1/B2), `revenue_at_risk`, and `suggested_fix`
+- Also note each forecast's `fidelity_tier` (F0–F3) and `directional` flag -- below F3, treat `revenue_at_risk` as **directional**, not measured
+- These are DEMAND-side blockers (the offer itself), distinct from the funnel/page/tracking bottlenecks the metrics reveal. Read `skills/funnel-diagnostics/rules/revenue-at-risk.md` for how B-tiers map onto AARRR stages and how to tell a demand blocker from a plumbing leak
+- If no forecasts exist, note this as a gap -- you can score the funnel mechanics but cannot attribute leaks to the offer without SDV objections
+
+**9. Reference Frameworks:**
 - Read `knowledge/aarrr-framework.md` -- The complete AARRR framework with benchmarks per vertical
 - Read `knowledge/gtm-creativity-atlas-2026.md` -- For tactic recommendations that match the bottleneck
-- Read any files in `skills/funnel-diagnostics/` for diagnostic rules and scoring methodology
+- Read any files in `skills/funnel-diagnostics/` for diagnostic rules and scoring methodology -- including `rules/revenue-at-risk.md` for the demand-blocker bridge
 
 ### Step 2: Build the AARRR Funnel Model
 
@@ -176,6 +183,52 @@ The bottleneck is the stage with the **largest negative impact on revenue**. Thi
    - If Activation is below 10%, it is the bottleneck unless Acquisition is also broken (fix Acquisition first -- no point activating users you do not have)
    - If Revenue score is high but Referral is 0, Referral is the bottleneck for growth (but not for immediate revenue)
 
+### Step 4.5: Emit the Revenue-at-Risk Ledger (demand blockers)
+
+A leaking stage has two possible causes, and you must separate them: a **funnel/page/tracking
+bottleneck** (plumbing — slow page, broken event, confusing onboarding) versus a **DEMAND blocker** (the
+offer itself — price, proof, risk). The funnel may leak because the OFFER has a demand blocker, not
+because the page is slow. The SDV `top_objections[]` you ingested in Step 1 are what let you tell these
+apart instead of guessing. Follow `skills/funnel-diagnostics/rules/revenue-at-risk.md`.
+
+1. **Collect every `top_objections[]` entry** across all `.gtm/sdv/forecasts/*.forecast.yml`. Each is a
+   B-tier blocker with its `blocker_tier`, `revenue_at_risk` (= `segment.revenue_pct × target_MRR`, read
+   `target_MRR` from `.gtm/config.json`), `objection`, representative verbatim, and `suggested_fix`.
+2. **Map each blocker onto the AARRR stage** it lands on (price → Revenue; proof/believability →
+   Activation/Revenue; risk → Revenue; fit → Acquisition/Activation; low urgency → Retention), per the
+   mapping table in the rules file. The blocker is surfaced **alongside** that stage's mechanical
+   bottleneck, never instead of it -- a stage can carry both.
+3. **Rank: B0 above B1 above B2**, and within each tier sort by `revenue_at_risk` descending.
+4. **Pair each with a remedy** -- add a guarantee / show proof / re-price (per
+   `skills/synthetic-demand/rules/price-sensitivity.md`).
+5. **Carry the fidelity caveat through.** Below F3 the `revenue_at_risk` dollars are **directional** —
+   rank the blockers and prioritize the offer work, but label the figures directional, not measured.
+
+Write the ledger to `.gtm/sdv/revenue-at-risk.md`:
+
+```markdown
+# Revenue-at-Risk Ledger -- {YYYY-MM-DD}
+
+Demand-side blockers from SDV, mapped onto AARRR stages and ranked by $ at risk.
+Fidelity: {F0-F3} -- {directional | calibrated}. Below F3, $ figures are directional.
+
+| Rank | Tier | AARRR Stage | $ at Risk | Segment | Objection | Verbatim | Remedy |
+|------|------|-------------|-----------|---------|-----------|----------|--------|
+| 1 | B0 | Revenue | ${X} | {segment} | {objection} | "{quote}" | re-price to WTP band |
+| 2 | B0 | Activation | ${X} | {segment} | {objection} | "{quote}" | show proof (testimonial) |
+| 3 | B1 | Revenue | ${X} | {segment} | {objection} | "{quote}" | add a guarantee |
+| 4 | B2 | Retention | ${X} | {segment} | {objection} | "{quote}" | polish copy |
+
+## Demand vs. plumbing
+{For each leaking AARRR stage: is this leak a DEMAND blocker (B-tier present) or a funnel/page/tracking
+bottleneck (no B-tier, metrics point at mechanics)? State which, so the offer fix and the engineering fix
+don't get confused.}
+```
+
+If no SDV forecasts exist, write a stub noting the gap ("No SDV forecasts found — funnel mechanics scored,
+but leaks cannot be attributed to the offer. Run `/gtm-validate` to generate demand forecasts.") and skip
+the table. Reference this ledger from the Step 6 diagnosis report.
+
 ### Step 5: Prescribe the Action
 
 You MUST prescribe exactly 1 to 3 actions. Never more than 3. Rank by expected revenue impact (highest first).
@@ -224,6 +277,10 @@ Save the full diagnosis to `.gtm/diagnoses/{YYYY-MM-DD}-funnel-diagnosis.md`:
 **Why this is the bottleneck:**
 {2-3 sentences explaining the data-backed reasoning}
 
+**Demand blocker vs. plumbing:** {Is the leak at this stage caused by a DEMAND blocker (a B-tier objection
+on the offer, from the revenue-at-risk ledger) or a funnel/page/tracking bottleneck (mechanics)? Name
+which. See `.gtm/sdv/revenue-at-risk.md`.}
+
 **Revenue impact if fixed:**
 {Quantified impact on downstream metrics and revenue}
 
@@ -262,6 +319,7 @@ Save the full diagnosis to `.gtm/diagnoses/{YYYY-MM-DD}-funnel-diagnosis.md`:
 8. **Never blame the product without data.** If retention is low, it might be a product problem OR an acquisition problem (wrong users). Check activation first.
 9. **Cross-reference paid and organic acquisition.** If CAC from paid is 5x higher than organic, the bottleneck might be "over-reliance on paid" not "paid is broken."
 10. **Append to MEMORY.md** after every diagnosis with a one-line summary and date so future diagnoses can reference the trend.
+11. **Separate demand blockers from plumbing leaks.** A leaking stage with a B-tier objection on it (from the SDV revenue-at-risk ledger) is a DEMAND problem — the offer, not the page. Don't prescribe an engineering fix for a mispriced offer, and don't re-write the offer when the plumbing (broken event, slow page, dead CAPI) is the real leak. F = fidelity, B = blocker, AARRR stages are separate axes — never collide them.
 
 ## Anti-Patterns to Detect
 

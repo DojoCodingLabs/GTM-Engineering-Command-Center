@@ -10,7 +10,7 @@ Layer 1 of the Stack. The Foundry's job is an **inexhaustible supply of genuinel
 |---|---|
 | Image generation, copy frameworks (PAS / AIDA / Before-After-Bridge), 5×5×5 | `agents/creative-director.md` |
 | Andromeda entity diversity ("20+ visually distinct creatives; never 5 variants of one image") | `agents/creative-director.md` + `skills/meta-ads/rules/andromeda-2026.md` |
-| Pre-deployment neural pre-test (kill weak concepts before spend) | `/gtm-neurotest` + `skills/neuro-testing/` |
+| Pre-deployment pre-flight gate (kill weak concepts before spend) | `/gtm-validate` — blends neuro (attention/memory; optional) + SDV (purchase intent/price) into one DEPLOY/TEST/ITERATE/SKIP verdict |
 | Tactic library, case studies, ethical ratings | `knowledge/gtm-creativity-atlas-2026.md` |
 | Brand tokens (color, font, logo) | `creative-director` reads `tailwind.config.*` + `.gtm/config.json` |
 
@@ -30,6 +30,8 @@ A batch is diverse only if its concepts vary along *meaning*, not just pixels. E
 - **Demo angle** — what the product is shown doing.
 
 **Rule: variety over near-duplication.** Two concepts that differ only in headline are *one* concept to Andromeda's entity clustering — they waste a slot and fragment signal. Aim for concepts that could each win for a *different reason*, so a win teaches you something transferable.
+
+**The tags feed the gate.** The forge `hypothesis` tags (hook / pain / offer / proof / format / objection) are not just attribution labels — they become **SDV's structured objection axis** at the `/gtm-validate` pre-flight gate. The `objection` tag in particular gives SDV the specific doubt to model for purchase intent, and the hook/pain/offer/proof/format tags scope which construct a weak score points at. Below-threshold concepts from `/gtm-validate` (verdict **ITERATE** / **SKIP**) are flagged for iteration with the gate's **lever — visual vs offer**: a strong-demand / weak-attention concept loops back on the *visual* (fix the creative execution), a strong-attention / weak-demand concept loops back on the *offer* (fix the offer/proof, not the visual). Only **DEPLOY** / **TEST** concepts proceed to deployment.
 
 ## Output contract
 

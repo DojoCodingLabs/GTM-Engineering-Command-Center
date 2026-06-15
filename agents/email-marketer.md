@@ -44,6 +44,14 @@ Search in: edge functions, API routes, services
 
 ### Step 2: Design the Sequence Architecture
 
+Before designing copy, enrich every behavioral/lifecycle segment with the **shared persona substrate** and **SDV forecasts** — build the persona once, consume it here:
+
+- **Read `.gtm/personas/`** (`schemas/persona.schema.json`). Each persona carries `pain_points`, `price_sensitivity`, `user_pct`, and `revenue_pct`. The segment a sequence targets maps to one or more persona objects; their objections and price tolerance shape the copy, and `revenue_pct` sets which segment to build for first.
+- **Read `.gtm/sdv/forecasts/*.forecast.yml`** if present. Each forecast carries structured `top_objections[]` (segment + objection + severity + `blocker_tier` B0/B1/B2 + `revenue_at_risk`) and any `willingness_to_pay` price band — these are *discovered* objections from the synthetic demand panel, not guesses.
+- **Map one SDV-discovered objection to one email.** The routing rule is explicit: the email that names and dissolves a persona's highest-severity objection is purpose-built for it. A **B0** demand-blocker for a paying persona earns its own dedicated email in the sequence; a B2 polish objection becomes a PS line. Order objection-handling emails by `revenue_at_risk` (handle the costliest objection first).
+- **Frame price by `price_sensitivity` + the WTP band.** For high-`price_sensitivity` personas (and the lower offer tier), lead trial-to-paid / upsell emails with value and a guarantee; for low-sensitivity personas, lead with the premium outcome. Never send the same discount framing across `low` and `high` price-sensitivity segments.
+- If `.gtm/personas/` is empty, recommend `/gtm-personas derive`; if no forecast exists, recommend `/gtm-validate` to discover objections before writing the objection-handling emails. See `skills/email-marketing/SKILL.md` (Enrich Segments with the Persona Substrate + SDV Forecasts).
+
 Based on the funnel stage being targeted, design the appropriate sequence type:
 
 **Welcome Sequence (Acquisition -> Activation):**

@@ -1,0 +1,51 @@
+# SDV Concept Schema (GTM Command Center)
+# A "concept" is the INPUT to a Synthetic Demand Validation run — the thing being tested
+# against the synthetic panel. Every file written to .gtm/sdv/forecasts/<concept-id>.concept.yml
+# MUST conform to this structure. All fields required unless marked (optional).
+#
+# A concept holds one or more VARIANTS. One variant = "single" mode (absolute read, vs a
+# manufactured status-quo reference). Two or more = "duel" mode (comparative-first — the
+# primary signal). Read alongside sdv-forecast.schema.yml and the synthetic-demand skill rules.
+
+concept:
+  id: string                    # "C01", "C02" — sequential, stable across reruns
+  name: string                  # Human label, e.g. "$497 7-day LATAM diagnostic offer"
+  surface: string               # "ad_creative" | "offer" | "copy"
+                                #   ad_creative — a rendered ad (image/video asset_ref, multimodal)
+                                #   offer       — a priced offer stack (enables price_test)
+                                #   copy        — a landing headline / section
+                                #   ("feature" is a reserved future seam, not a wired surface)
+  description: string           # 1-3 sentences: what is being validated and why
+  created_date: string          # ISO date: "2026-06-14"
+
+  target_segments: string[]     # Persona IDs from .gtm/personas/ (["P01","P03"]); empty/"all" = whole panel
+
+  comparison_mode: string       # "single" | "duel" ("duel" REQUIRES >=2 variants)
+
+  constructs_to_measure: string[] # Subset of the battery (see rules/construct-battery.md). Default if
+                                #   omitted: the surface-appropriate set (ad_creative / offer / copy)
+
+  price_test:                   # (optional) Only meaningful for surface: offer
+    method: string              # "van_westendorp" | "gabor_granger" | "none"
+    currency: string            # ISO 4217: "USD"
+    anchor_price: number        # The price shown by default (e.g., 497)
+    price_points: number[]      # Gabor-Granger sweep, e.g. [197, 297, 497, 697, 997]
+
+  variants:                     # 1 variant = single mode; >=2 = duel mode
+    - id: string                # "V1", "V2" — unique within the concept
+      label: string             # Short human label, e.g. "Outcome-led hook"
+      content: string           # (optional) text stimulus (copy, offer wording)
+      asset_ref: string         # (optional) path to an image/video for multimodal stimulus
+      price: number             # (optional) variant price; defaults to price_test.anchor_price
+      hypothesis: string        # (optional) the forge hypothesis tag this variant carries
+                                #   (hook|pain|offer|proof|format|objection) — the objection axis
+      notes: string             # (optional) what this variant changes vs the others
+
+# Consistency rules:
+# - comparison_mode "duel"  => variants length >= 2 ; "single" => length == 1.
+# - Every variant has at least one of: content, asset_ref. surface "ad_creative" SHOULD use asset_ref.
+# - price_test present (method != "none") => surface == "offer".
+# - willingness_to_pay in constructs_to_measure => price_test.method != "none".
+# - Persona IDs in target_segments SHOULD exist in .gtm/personas/; if not, the run falls back to a
+#   generated panel and flags it in the forecast.
+# - Do NOT mix surfaces across a single concept's variants (demand_scores are surface-local).

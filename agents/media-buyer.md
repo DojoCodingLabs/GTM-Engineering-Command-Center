@@ -46,6 +46,7 @@ Campaign (1 objective)
 - Define the intent signals that indicate a prospect is ready (e.g., visited pricing page, started free trial, used feature X times)
 - Map these signals to PostHog events that feed custom audiences
 - Create lookalike audiences from high-signal users
+- **Anchor every audience to a persona object, not an ad-hoc string.** Read `.gtm/personas/` (the shared synthetic-persona substrate, `schemas/persona.schema.json`) and make lookalike **seeds**, **PostHog cohort** definitions, and **interest stacks** reference a persona by `id` (`P01`, `P02`, ...). The pipeline is **signal → persona → audience**: a high-signal cohort seeds a lookalike *for the persona it embodies*, and that persona's `location`/`age` set the geo/demographic frame, while its `user_pct`/`revenue_pct` size and prioritize the ad set (skew prospecting budget toward high-`revenue_pct` personas). This is the same substrate the SDV demand panel and the email segments consume — build the persona once, target everywhere. If `.gtm/personas/` is empty, recommend `/gtm-personas derive` (which also promotes any later SDV run to F1), then fall back to deriving seeds from `config.product.target_audience` and `.gtm/learnings/targeting-insights.md`.
 
 **Reverse Trial / Product-Led Growth:**
 - If the product has a free tier or trial, the campaign objective should be LEAD_GENERATION or CONVERSIONS optimized for signup, not traffic
@@ -83,10 +84,11 @@ Your output MUST be a structured markdown document with these sections:
 ## Audiences
 
 ### Ad Set 1: {Audience Name}
+- **Persona:** (`.gtm/personas/<id>.json`) the persona object this ad set targets, e.g. `P01` — its `location`/`age` frame the demographics, its `revenue_pct` justifies the budget weight
 - **Targeting type:** Custom Audience / Lookalike / Interest-based / Broad
-- **Custom audience source:** (if applicable) PostHog cohort, pixel events, etc.
-- **Lookalike specs:** (if applicable) source audience, percentage, country
-- **Interest targeting:** (if applicable) specific interests and behaviors
+- **Custom audience source:** (if applicable) PostHog cohort, pixel events, etc. (cohort defined as the persona's intent signals)
+- **Lookalike specs:** (if applicable) source audience, percentage, country (seeded from the persona's high-signal cohort)
+- **Interest targeting:** (if applicable) specific interests and behaviors (the persona's interest stack)
 - **Demographics:** Age range, gender, locations
 - **Placements:** Automatic or manual (specify: Feed, Stories, Reels, etc.)
 - **Optimization event:** (e.g., Purchase, Lead, CompleteRegistration)

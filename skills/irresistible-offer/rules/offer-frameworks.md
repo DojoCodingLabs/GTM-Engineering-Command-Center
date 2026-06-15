@@ -54,6 +54,39 @@ Your investment today:   $997
 
 The gap between stacked value and actual price creates the "irresistible" feeling.
 
+### Feeding the SDV Price Test (objection tags + price battery)
+
+The offer stack is also the **stimulus** for Synthetic Demand Validation's `offer` surface
+(`skills/synthetic-demand/`). To make the offer machine-readable by SDV, carry three things through:
+
+**1. Tag each layer with the objection it answers.** Each stack layer already attacks one objection — make
+that tag explicit so it feeds SDV's objection mining (the **B-tier** axis: B0 Demand Blocker · B1 Demand
+Friction · B2 Demand Polish):
+
+| Stack layer | Objection it answers |
+|-------------|----------------------|
+| Speed bonus | "this will take forever" |
+| Certainty bonus | "what if it doesn't work for me" |
+| Ease bonus | "this seems like a lot of work" |
+| Risk reversal / guarantee | "what if I waste my money" |
+
+When SDV mines a high-severity, high-frequency objection in a paying segment, it promotes a **B0 blocker**
+and a remedy — and the remedy is *add the stack layer tagged with that objection* (or strengthen its
+guarantee tier). The tags are the wiring between an objection and the layer that neutralizes it.
+
+**2. The value-anchored "Total value" is the Van Westendorp anchor.** The stacked "Total value: $6,285" line
+becomes SDV's `anchor_price` for the Van Westendorp PSM — the reference the panel reacts to when naming
+too-cheap / cheap / expensive / too-expensive prices.
+
+**3. LATAM odd-pricing supplies the Gabor-Granger price points.** The odd-pricing ladder ($497 / $997, plus
+the daily-cost reframe) becomes SDV's `price_points` sweep, e.g. `[297, 497, 697, 997, 1497]`. SDV runs
+Gabor-Granger across them to find the **revenue-max price** (`revenue_index = price × est_conversion`).
+
+**Run the battery with `/gtm-validate --surface offer`** — it scores the full construct battery *and* runs
+the price test, returning (a) the revenue-maximizing price, and (b) which **guarantee tier** most lifts the
+`price_fairness` construct. Use it to pick the guarantee strength and the price together, before spend. See
+`skills/synthetic-demand/rules/price-sensitivity.md`.
+
 ### Pricing Psychology for LATAM
 
 - Always show monthly payment option first: "$83/mes" feels lighter than "$997"

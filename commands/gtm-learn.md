@@ -251,6 +251,18 @@ For each insight, assign a confidence level:
 
 Low-confidence insights should be flagged as "hypothesis — needs more data" and tested in the next campaign cycle.
 
+### SDV forecasts: keep two axes separate
+
+A Synthetic Demand Validation forecast carries a **fidelity tier** (F0–F3) — how well-*grounded* the prediction is — which is NOT the same as realized-evidence **confidence** (the High/Medium/Low above, based on real conversion counts). A day-zero F3 forecast has rich grounding but **zero realized conversions**, so it is still **Low (predicted, unconfirmed)** confidence by the table above. When logging an SDV insight to MEMORY.md, record **both** as distinct fields:
+
+```
+- {insight} | fidelity: F2 | confidence: Low (predicted, unconfirmed) | {date}
+```
+
+Promote confidence only as real conversions accrue and validate the prediction — never let a high fidelity tier masquerade as realized confidence. As paired (predicted, realized) observations accumulate, append them to `.gtm/sdv/calibration/` so the demand-forecaster can fit the synthetic→actual map and promote the tier F1→F2→F3 (see `skills/synthetic-demand/rules/calibration.md`).
+
+The learning loop also correlates each predicted SDV objection (the B-tier demand blocker on a stage, from `.gtm/sdv/revenue-at-risk.md`) against the realized funnel drop-off at that same AARRR stage, accruing those (predicted-objection, realized-drop-off) pairs in `.gtm/sdv/calibration/` to promote the fidelity tier F1→F2 over time as the offer's blockers prove out against actual leak data.
+
 ## Error Handling
 
 - **No metrics snapshots**: Tell the user to run `/gtm-metrics` first. STOP.

@@ -45,6 +45,22 @@ CORE: 12-week coding bootcamp ($2,997 value)
 = Total value: $5,788 → Your price: $997
 ```
 
+### Pre-Testing the Offer with SDV (`/gtm-validate --surface offer`)
+
+Before spending on an offer, validate it with Synthetic Demand Validation (`skills/synthetic-demand/`). The
+offer stack maps onto SDV cleanly:
+
+- **Each stack layer is tagged with the objection it answers** (Speed → "takes forever"; Certainty → "won't
+  work for me"; Ease → "too much work"; Risk-reversal / guarantee → "might waste my money"). These tags feed
+  SDV's objection mining and its **B-tier** blockers (B0 Demand Blocker / B1 Friction / B2 Polish) — a mined
+  objection's remedy is the stack layer tagged to it.
+- **The value-anchored "Total value" becomes the Van Westendorp `anchor_price`**, and the **LATAM odd-pricing
+  ($497 / $997, daily-cost framing) supplies the Gabor-Granger `price_points`** for the sweep.
+- `/gtm-validate --surface offer` runs the **full construct battery plus the price test**, returning the
+  **revenue-maximizing price** and **which guarantee tier most lifts `price_fairness`** — so you pick price
+  and guarantee strength together. See `skills/irresistible-offer/rules/offer-frameworks.md` and
+  `skills/synthetic-demand/rules/price-sensitivity.md`.
+
 ## Copy Frameworks
 
 ### PAS (Problem - Agitate - Solve)

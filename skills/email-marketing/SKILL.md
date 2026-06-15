@@ -111,6 +111,16 @@ Day 10: Follow-up if no action taken
 | Paying Customers | Retention | Expansion + advocacy |
 | Churned | Lost | Win-back |
 
+### Enrich Segments with the Persona Substrate + SDV Forecasts
+
+Behavioral and lifecycle segments above tell you *what* a user is doing; the **shared persona substrate** (`.gtm/personas/`, `schemas/persona.schema.json`) and **SDV forecasts** (`.gtm/sdv/forecasts/*.forecast.yml`) tell you *what they object to* and *what price they tolerate* — build the persona once, consume it here. Cross the two axes:
+
+- **Persona objections → which email handles which objection.** Each persona carries `pain_points`, and each SDV forecast carries structured `top_objections[]` (segment + objection + severity + `blocker_tier` B0/B1/B2 + `revenue_at_risk`). Map the highest-severity objection *for the persona(s) in a segment* to a specific email: the email that names and dissolves that exact objection. A B0 demand-blocker for a paying persona earns its own dedicated email; a B2 polish objection is a PS line. This is the routing rule — **one SDV-discovered objection, one email that answers it** — not generic benefit copy.
+- **Price tolerance → offer framing per persona.** A persona's `price_sensitivity` (`low`/`medium`/`high`) and any SDV `willingness_to_pay` band (Van Westendorp / Gabor-Granger range) set how an upsell/trial-to-paid email frames price: lead with value and a guarantee for high-sensitivity personas (and the lower offer tier), lead with the premium outcome for low-sensitivity personas. Never send the same discount framing to a `low` and a `high` `price_sensitivity` segment.
+- **Revenue weighting.** Prioritize sequence build order by the persona's `revenue_pct` and the objection's `revenue_at_risk` — handle the objection costing the most revenue first.
+
+If `.gtm/personas/` is empty, recommend `/gtm-personas derive`; if no SDV forecast exists yet, recommend `/gtm-validate` to discover objections before writing the objection-handling emails (the forecast's `top_objections[]` is the input, not a guess).
+
 ## A/B Testing Framework
 
 ### What to Test (Priority Order)

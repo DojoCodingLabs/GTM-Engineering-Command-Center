@@ -157,6 +157,20 @@ For each section, generate conversion-optimized copy:
 
 Generate 3 headline/CTA combinations for A/B testing.
 
+### 3.2a: Pre-Test Copy Variants (optional gate)
+
+Before publishing copy/headline variants, you MAY rank them with the unified pre-flight gate on the **copy construct subset** — comprehension, believability, appeal, purchase_intent:
+
+```
+/gtm-validate "headline A" "headline B" "headline C" --surface copy
+```
+
+- This runs SDV-only (no neuro on the `copy` surface) and returns a ranked table with a verdict per variant: **DEPLOY / TEST / ITERATE / SKIP**.
+- **Only `DEPLOY` and `TEST` copy proceeds** to A/B testing. `ITERATE`/`SKIP` variants loop back with their lever (the weakest construct — e.g. believability) before they ship.
+- **Near-identical headlines** that come back as an **unstable tie** (low `rank_stability`) are flagged — surface them to the user rather than declaring a false winner. Tied copy is capped at `TEST`, never promoted to a single winner.
+
+Carry the surviving DEPLOY/TEST headlines forward as your A/B set.
+
 ### 3.3: Component Code Generation
 
 Generate the landing page using the project's ACTUAL component library:
