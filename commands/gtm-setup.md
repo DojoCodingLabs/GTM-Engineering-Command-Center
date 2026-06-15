@@ -516,6 +516,21 @@ Write `.gtm/config.json` with the collected values:
     "timezone": "America/New_York",
     "campaign_status": "PAUSED"
   },
+  "targets": {
+    "target_cpa": null,
+    "primary_event": "LEAD",
+    "micro_events": ["ADD_TO_CART", "INITIATED_CHECKOUT"]
+  },
+  "hva": {
+    "autonomy": "recommend",
+    "read_cadence_minutes": 60,
+    "kill_multiple": 3.0,
+    "bh_alpha": 0.10,
+    "frequency_ceiling": 3.0,
+    "max_creatives_per_adset": 5,
+    "scale_bid_cap_multiple": 0.7,
+    "max_daily_budget_increase_pct": 20
+  },
   "stack": {
     "auth": "{detected}",
     "database": "{detected}",
@@ -526,6 +541,8 @@ Write `.gtm/config.json` with the collected values:
   }
 }
 ```
+
+**`targets` + `hva` blocks (for the High-Velocity Advertising engine).** `targets.target_cpa` is your CPA/CAC goal in account currency — set it if you intend to run `/hva`, because CLEAR-E and the Read Ladder are spend-relative to it (the HVA Desk scorer refuses to run without it). `targets.primary_event` is the qualifying CAPI conversion; `targets.micro_events` are the leading micro-conversions. The `hva` block defaults to the safest autonomy mode (`recommend` — recommend-only, no unattended writes); the operator raises it to `cut-auto` or `full-auto` deliberately once they trust the loop. If the user is not setting up paid advertising now, leave `target_cpa` as `null` — `/hva` Phase 0 will prompt for it later. See `skills/high-velocity-advertising/SKILL.md`.
 
 ## Phase 5: Gitignore Safety
 

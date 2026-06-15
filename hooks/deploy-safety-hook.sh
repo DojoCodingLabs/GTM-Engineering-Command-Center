@@ -24,6 +24,27 @@ if echo "$TOOL_INPUT" | grep -qE "(^|[[:space:]])meta[[:space:]]+(ads[[:space:]]
   fi
 fi
 
+# HVA Desk awareness — distinguish a safe cut from money-spending actions.
+# The HVA loop (cut-auto / full-auto) writes to the account autonomously, so be explicit
+# about which direction the write goes. Pausing only ever SAVES money and is reversible.
+if echo "$TOOL_INPUT" | grep -qE "(^|[[:space:]])meta[[:space:]]+ads[[:space:]]+ad[[:space:]]+update" \
+   && echo "$TOOL_INPUT" | grep -qE "[[:space:]]--status[[:space:]]+PAUSED"; then
+  echo "ℹ️  GTM Safety: HVA cut detected (ad → PAUSED). This is reversible and only saves money (CLEAR asymmetry: cut fast)." >&2
+fi
+# Money-spending direction: budget increases (scale) or activation. These get the loud warning.
+if echo "$TOOL_INPUT" | grep -qE "(^|[[:space:]])meta[[:space:]]+ads[[:space:]]+adset[[:space:]]+update" \
+   && echo "$TOOL_INPUT" | grep -qE "[[:space:]]--daily-budget|[[:space:]]--lifetime-budget"; then
+  echo "🚨 GTM Safety: Ad set BUDGET change detected (likely an HVA scale). This SPENDS money. HVA scales should stay ≤20%/day and only run in full-auto. Verify the new budget before approving." >&2
+fi
+if echo "$TOOL_INPUT" | grep -qE "[[:space:]]--status[[:space:]]+ACTIVE"; then
+  echo "🚨 GTM Safety: Status → ACTIVE detected. This makes a campaign/ad set/ad live and spend money. Confirm this is intended (HVA deploys PAUSED by default)." >&2
+fi
+# Surface when the account is configured for unattended writes.
+if [ -f ".gtm/config.json" ] && grep -qE '"autonomy"[[:space:]]*:[[:space:]]*"full-auto"' .gtm/config.json 2>/dev/null \
+   && echo "$TOOL_INPUT" | grep -qE "(^|[[:space:]])meta[[:space:]]+ads[[:space:]]+(ad|adset|campaign)[[:space:]]+update"; then
+  echo "ℹ️  GTM Safety: hva.autonomy is set to full-auto — the HVA Desk can pause AND scale without asking. Review .gtm/hva/*/audit.md for the action trail." >&2
+fi
+
 # Check for email send operations
 if echo "$TOOL_INPUT" | grep -qiE "resend\.emails\.send|sendgrid.*send|postmark.*send|/api/send-email"; then
   echo "⚠️  GTM Safety: Email send operation detected. This will deliver real emails to real people." >&2
