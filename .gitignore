@@ -13,3 +13,7 @@ node_modules/
 
 # Tribe v2 model cache (large binary files, ~2-4GB)
 .gtm/models/
+
+# Python bytecode (from scripts/ + the HVA scorer test suite)
+__pycache__/
+*.pyc

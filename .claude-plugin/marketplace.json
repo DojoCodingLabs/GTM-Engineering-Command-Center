@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "gtm-engineering-command-center",
-  "version": "1.6.0",
-  "description": "Autonomous GTM operating system. 14 agents, 21 commands, 15 skills, 4 cloud routines. Multichannel orchestration, AARRR funnel diagnostics, Tribe v2 neural pre-testing for creatives, browser QA (Playwright + Computer Use), cross-channel attribution, codebase-aware asset generation, and always-on optimization via Claude Code Routines.",
+  "version": "1.7.0",
+  "description": "Autonomous GTM operating system. 15 agents, 28 commands, 16 skills, 5 cloud routines. Multichannel orchestration, AARRR funnel diagnostics, Tribe v2 neural pre-testing, the High-Velocity Advertising (HVA) engine for creative discovery at machine speed (CLEAR + deterministic scorer + the Vault moat), browser QA (Playwright + Computer Use), cross-channel attribution, codebase-aware asset generation, and always-on optimization via Claude Code Routines.",
   "owner": {
     "name": "Dojo Coding Labs",
     "email": "team@dojocoding.io"
@@ -10,8 +10,8 @@
   "plugins": [
     {
       "name": "gtm-engineering-command-center",
-      "description": "Autonomous GTM operating system — 14 agents, 21 commands, 15 skills. Multichannel orchestration, AARRR funnel diagnostics, Tribe v2 neural pre-testing, browser QA, cross-channel attribution, codebase-aware asset generation, and cloud Routines.",
-      "version": "1.6.0",
+      "description": "Autonomous GTM operating system — 15 agents, 28 commands, 16 skills. Multichannel orchestration, AARRR funnel diagnostics, Tribe v2 neural pre-testing, the High-Velocity Advertising (HVA) engine (CLEAR + deterministic scorer + the Vault moat), browser QA, cross-channel attribution, codebase-aware asset generation, and cloud Routines.",
+      "version": "1.7.0",
       "author": {
         "name": "Dojo Coding Labs",
         "email": "team@dojocoding.io"
@@ -33,6 +33,8 @@
         "gemini",
         "direct-response",
         "campaign-automation",
+        "high-velocity-advertising",
+        "creative-testing",
         "claude-code",
         "claude-code-plugin",
         "dojo-coding",

@@ -108,6 +108,7 @@ Step 3: {channel} -- {action}
 ```
 
 4. Present the channel recommendation with estimated impact.
+4b. **HVA fit pointer (the two engines).** If paid social is recommended AND the conversion looks HVA-fit — fast, cheap, well-tracked (CAPI live, EMQ ≥ 8), with budget to hit decision volume in hours — note: *"This conversion fits the High-Velocity Advertising engine. Consider running `/hva {campaign}` for machine-speed creative discovery (forge → deploy → read → cut/scale → vault) instead of, or alongside, the slow-craft motion here."* If the conversion is high-ticket, long-cycle, or weakly tracked, say HVA does **not** fit and the slow-craft lifecycle below is the right motion. The two engines stay separate — this is a pointer, not a handoff. See `skills/high-velocity-advertising/rules/guardrails.md` (Fit Boundary).
 5. Ask: **"Approve this channel strategy? Select channels to activate. (approve all / select / modify)"**
    - If "select": ask which channels to include.
    - If "modify": incorporate feedback.

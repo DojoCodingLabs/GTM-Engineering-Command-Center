@@ -188,11 +188,23 @@ Then in your project:
 | `/gtm-animate` | Create animated video ads with Remotion |
 | `/gtm-routines` | Manage autonomous cloud routines (daily metrics, weekly optimization, PR checks) |
 
+### High-Velocity Advertising (HVA) Commands
+
+The HVA engine — creative discovery at machine speed. A standalone loop parallel to `/gtm` (see **Two Engines** below).
+
+| Command | What It Does |
+|---------|-------------|
+| `/hva` | **The HVA loop** — fit-check (router) → forge → deploy (PAUSED) → read → decide (cut or compound) → vault |
+| `/hva-forge` | Forge a diverse, hypothesis-tagged creative batch (variety over duplication, ≤5/ad set), reusing creative-director + neuro pre-test |
+| `/hva-lint` | Lint a campaign structure against the HVA guardrails + Fit Boundary (read-only) |
+| `/hva-review` | Read live creatives **by impression volume**, run CLEAR via the deterministic scorer, emit cut/scale/hold per creative |
+| `/hva-vault` | Manage the Vault — promote confirmed winners, breed creative families, update Foundry priors, rotate fatigue |
+
 ---
 
 ## Agents
 
-15 specialized agents. No model pinning — every agent runs on the most capable model in your environment.
+16 specialized agents. No model pinning — every agent runs on the most capable model in your environment.
 
 | Agent | Role |
 |-------|------|
@@ -210,12 +222,13 @@ Then in your project:
 | **stack-detector** | Deep project stack discovery. 20+ integration types → GTM capability mapping. |
 | **growth-hacker** | Community intelligence. Reddit, X, GitHub. Compares findings against both Atlas knowledge bases. |
 | **qa-engineer** | Autonomous QA via Playwright, Computer Use, Chrome DevTools. Verifies every deployment. |
+| **hva-desk** | **The HVA Desk (Layer 3).** Reads insights by impression volume, runs the deterministic CLEAR scorer, converts early algorithm behavior into cut-or-scale calls. Configurable autonomy (recommend / cut-auto / full-auto). Cut fast, scale slow. |
 
 ---
 
 ## Skills
 
-16 domain knowledge stacks — the brain that agents reference for decisions.
+17 domain knowledge stacks — the brain that agents reference for decisions.
 
 | Skill | Domain | Key April 2026 Knowledge |
 |-------|--------|--------------------------|
@@ -233,6 +246,7 @@ Then in your project:
 | `stripe-revenue` | Revenue intel | MRR tracking, cohort revenue, LTV calculation, churn diagnostics |
 | `browser-qa` | QA verification | Playwright patterns, Computer Use, verification checklists |
 | `neuro-testing` | Brain prediction | Brain region mapping, ROI extraction, score interpretation, dead zone editing, setup guide |
+| `high-velocity-advertising` | Creative discovery at machine speed | **CLEAR decision rule, the five-layer Stack, the Read Ladder, the two-clocks asymmetry, Benjamini-Hochberg correction, the Vault moat, the Fit Boundary.** The spec behind `/hva*` + `hva-desk` + the deterministic `scripts/hva-score.py` scorer (5 rule files: the-desk, the-foundry, the-vault, guardrails, evidence-base) |
 
 **Plus 3 deep-dive rule files:**
 - `andromeda-2026.md` — Full Andromeda mechanics: Entity Clustering, ARM pipeline, EMQ, lifecycle compression, $834M impact study
@@ -313,6 +327,40 @@ The plugin structures campaigns the way $100K-$500K/month operators run them in 
 
 ---
 
+## Two Engines — Slow-Craft and High-Velocity
+
+The plugin ships **two advertising motions.** Match the engine to the conversion, not to the excitement — one company can run both, on different campaigns, in the same account.
+
+| | **Slow-Craft** (`/gtm`) | **High-Velocity** (`/hva`) |
+|---|---|---|
+| **Run it when** | High-ticket B2B, long sales cycles, weak/offline tracking, low budget, regulated | Fast, cheap, well-tracked conversions: DTC, apps, info products, low-friction lead gen |
+| **Reads measured in** | Weeks, by calendar | Hours, by **impression volume** (the Read Ladder) |
+| **Quality scored by** | Sales / closed-won in the CRM | Cost per qualifying CAPI event |
+| **Creative** | A few high-craft concepts | An inexhaustible, diverse supply (the Foundry) |
+| **Decision rule** | Human judgment over time | **CLEAR**, deterministic, at machine speed (the Desk) |
+
+**HVA in one line:** generate, deploy, read, and retire creative hypotheses faster than competitors *without destroying signal quality*, by treating the learning phase as a real-time market maker for creative discovery.
+
+- **The Stack (what to build):** Layer 0 Instrument (clean CAPI) → 1 Foundry (creative) → 2 Structure (funded ad sets) → 3 Desk (CLEAR + Read Ladder) → 4 Vault (the moat).
+- **The Loop (what to run):** Forge → Deploy → Read → Decide (cut or compound) → refeed sharper priors.
+- **CLEAR:** **C**lean (CAPI truth only) · **L**ead (leading indicators, never first-window ROAS) · **E**conomics (kill at ~3× target CPA, zero conversions) · **A**symmetry (cut fast, scale slow — two clocks) · **R**eplication (Benjamini-Hochberg before crowning a winner).
+- **Autonomy is configurable** in `.gtm/config.json` (`hva.autonomy`): `recommend` (default, recommend-only) → `cut-auto` (auto-pause losers) → `full-auto` (auto-pause + bounded auto-scale). Pausing only ever saves money, so it automates a tier before scaling.
+- **The decision math is deterministic and unit-tested:** `scripts/hva-score.py` (run `python3 -m unittest discover scripts/tests`). The framework spec lives in the `high-velocity-advertising` skill.
+
+```
+/hva spring-tripwire $80/day
+  → Fit check: CAPI live, EMQ 9, fast conversion → RUN HVA
+  → Forge:  8 distinct concepts (hook × pain × proof × format), neuro-pre-tested
+  → Lint + Deploy (PAUSED): one concept per ad, 5 ads in one funded ad set
+  → Read (hourly):  scorer reads each creative by volume
+       pain-claymation  hard  CUT    economics-3x-cpa-zero-conv  → pause
+       founder-story     hard  SCALE  confirmed-winner (q=0.03)   → scale
+       ugc-testimonial   second HOLD  fix-landing-or-offer        → fix funnel
+  → Vault:  promote founder-story; sharper priors refeed the next Forge
+```
+
+---
+
 ## Routines
 
 Cloud-based autonomous workflows powered by [Claude Code Routines](https://code.claude.com/docs/en/routines).
@@ -323,6 +371,7 @@ Cloud-based autonomous workflows powered by [Claude Code Routines](https://code.
 | **Weekly Optimization** | Monday 10 AM | Full learning loop + funnel diagnosis + weekly report |
 | **PR Conversion Check** | GitHub PR event | Reviews landing/email PRs for tracking completeness |
 | **Experiment Monitor** | 6 PM daily | Checks A/B experiments for statistical significance |
+| **HVA Read Loop** | Hourly | The always-on HVA Desk — pulls per-creative insights, runs CLEAR, acts per `hva.autonomy` (cut fast / scale slow). Hard-blocks if CAPI/EMQ regresses. |
 
 ---
 

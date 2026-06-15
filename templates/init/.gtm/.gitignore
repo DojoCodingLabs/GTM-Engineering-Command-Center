@@ -7,4 +7,10 @@ creatives/*.jpg
 creatives/**/*.png
 creatives/**/*.jpg
 
+# HVA creative binaries and raw read snapshots (noisy/large).
+# Keep manifests, decisions, audit logs, and the Vault — that data is the moat.
+hva/**/*.png
+hva/**/*.jpg
+hva/**/reads/snapshot-*.json
+
 # Everything else is safe to commit
