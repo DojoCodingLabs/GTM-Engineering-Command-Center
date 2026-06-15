@@ -71,6 +71,7 @@ When planning campaigns, creating copy, or recommending strategies, **always ref
 - `knowledge/gtm-creativity-atlas-2026.md` — Full GTM Creativity Atlas 2026: 130+ tactics, 15 sections, ethical ratings, tool directory
 - `knowledge/media-buying-atlas-2026.md` — Media Buying Atlas April 2026: Andromeda, Entity Clustering, ARM, EMQ, ASC+, Flood+Underbid, Tribe v2 Dead Zone Editing, TikTok/LinkedIn/X.com, 7-day playbook, ethical rankings. 1,337 lines from 13 primary research sources and $834M in analyzed ad spend.
 - `knowledge/seo-geo-atlas-2026.md` — SEO/GEO/AEO/LLM Visibility Atlas April 2026: Citation science, platform architecture, AI crawler configuration, LATAM GEO arbitrage, 90-day action plan. 2,221 lines from 7 independent research passes.
+- `knowledge/google-ads-atlas-2026.md` — Google Ads Atlas 2026 (Info Products & Digital SaaS Edition): 18 Parts + Appendices A-D. Signal-first account architecture (Hagakure, brand isolation, intent ladder, 5-pillar budget matrix), Performance Max control + John Moran feeder, Smart Bidding migration ladder + value-based bidding, Enhanced Conversions + Consent Mode v2 + GCLID-to-CRM loop, broad-match-era keywords + n-gram mining, AI Max for Search, RSA/YouTube creative, policy/reinstatement/cloaking anatomy, cross-surface incrementality. Every tactic scored on the whitehat/grayhat/blackhat 1-10 spectrum (Unified Ethical Ranking Matrix, Part XVI). 886 lines, four reconciled deep-research passes. Operational deep-dives live in the `google-ads` skill.
 
 ## Rules Files
 

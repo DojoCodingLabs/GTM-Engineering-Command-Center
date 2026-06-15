@@ -39,6 +39,19 @@ Each channel plays a specific role in the journey. Using a channel for the wrong
 | LinkedIn (organic) | Authority, recruitment | B2B leads | Consumer acquisition |
 | LinkedIn (ads) | B2B lead gen | Account-based marketing | Consumer products |
 
+### Google's Internal Surface Roles
+
+Google is not one channel — it is a stack of surfaces, each playing a distinct funnel role. Treating "Google Ads" as a monolith causes surfaces to cannibalize each other's credit. Map them by role (see `skills/google-ads/` and Atlas Part 2 for surface mechanics):
+
+| Surface | Funnel Role | Behaves Like |
+|---------|------------|-------------|
+| Search (non-brand) | **CAPTURES** existing demand | Intent harvest |
+| Search (brand) | **CONVERTS** demand others created; defends margin | Decision-intent closer |
+| Demand Gen + YouTube | **CREATE / shape** demand (top-funnel) | Paid social |
+| Performance Max / Display | **REMARKET / recapture** warm visitors | Retargeting |
+
+**Orchestration (handoff, not competition):** Demand Gen + YouTube build the pool → Search + AI Max capture the demand the moment it surfaces → PMax/Display remarket the warm visitors who didn't convert → brand Search secures the final decision-intent click. Each surface hands the user to the next rather than fighting for the same conversion credit. If two surfaces report claiming the same conversions, you have an overlap leak, not incremental volume.
+
 ## Channel Sequencing Templates
 
 ### Template 1: Content-Led Acquisition (Low Budget)

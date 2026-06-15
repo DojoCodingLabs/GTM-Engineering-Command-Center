@@ -12,13 +12,13 @@
 
 <p align="center">
   <a href="#installation"><img src="https://img.shields.io/badge/Claude_Code-Plugin-7C3AED?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6IiBmaWxsPSJ3aGl0ZSIvPjwvc3ZnPg==&logoColor=white" alt="Claude Code Plugin"></a>
-  <img src="https://img.shields.io/badge/version-1.5.0-C980FC?style=for-the-badge" alt="Version 1.5.0">
+  <img src="https://img.shields.io/badge/version-1.8.0-C980FC?style=for-the-badge" alt="Version 1.8.0">
   <img src="https://img.shields.io/badge/license-MIT-FF7151?style=for-the-badge" alt="MIT License">
   <img src="https://img.shields.io/badge/channels-7-07070E?style=for-the-badge" alt="7 Channels">
 </p>
 
 <p align="center">
-  <a href="#slash-commands">23 Commands</a> •
+  <a href="#slash-commands">28 Commands</a> •
   <a href="#agents">15 Agents</a> •
   <a href="#skills">16 Skills</a> •
   <a href="#routines">4 Cloud Routines</a> •
@@ -162,8 +162,8 @@ Then in your project:
 | `/gtm-plan` | Multichannel media planning — Meta, Google, TikTok, Email, SEO, LinkedIn, Outreach. Budget-aware structure. |
 | `/gtm-create` | Generate 20+ visually distinct creatives across 4 levers and 6 hook categories. Statics, UGC, video, claymation. |
 | `/gtm-neurotest` | **Tribe v2 neural pre-test** — brain response prediction, dead zone editing, deploy/test/skip verdicts |
-| `/gtm-deploy` | Deploy to any channel — Meta Graph API, Google Ads API, email provider, git commit. ASC+ and Flood+Underbid support. |
-| `/gtm-metrics` | Unified metrics from all channels with Blended MER (total spend / total revenue) |
+| `/gtm-deploy` | Deploy to any channel — Meta Graph API, **full Google Ads REST `:mutate` route (budget → campaign → adGroup → keywords → RSA, not a stub)**, email provider, git commit. ASC+ and Flood+Underbid support. |
+| `/gtm-metrics` | Unified metrics from all channels with Blended MER (total spend / total revenue). **Pulls Google via `google-ads-open-cli` (read-only).** |
 | `/gtm-report` | Weekly performance report with cross-channel attribution and AARRR trend |
 | `/gtm-learn` | Extract insights, correlate neural scores with actual CPA, calibrate Tribe v2 weights |
 
@@ -204,7 +204,7 @@ The HVA engine — creative discovery at machine speed. A standalone loop parall
 
 ## Agents
 
-16 specialized agents. No model pinning — every agent runs on the most capable model in your environment.
+15 specialized agents. No model pinning — every agent runs on the most capable model in your environment.
 
 | Agent | Role |
 |-------|------|
@@ -212,8 +212,8 @@ The HVA engine — creative discovery at machine speed. A standalone loop parall
 | **media-buyer** | Plans campaigns with budget-aware structure (1 ad set at $20/day, ASC+ at $500+/day). Flood+Underbid testing. TikTok + LinkedIn + X.com. Patience Paradox. pLTV bidding. |
 | **creative-director** | Generates 20+ visually distinct creatives across 4 levers (Persona × Messaging × Hook × Format) and 6 hook categories. Entity ID diversity. Static priority (60-70% of conversions). AI UGC pipeline. Deliberately absurd formats. |
 | **neuro-analyst** | Tribe v2 brain prediction. 7 ROI scores (attention, emotion, memory, decision, comprehension, face response, reward). **Dead Zone Editing** — second-by-second timeline, cut flat signals, front-load peaks. Biological A/B testing. |
-| **campaign-operator** | Deploys via Meta Graph API, Google Ads API, email providers. **ASC+ deployment**, Flood+Underbid, Post ID relaunching, EMQ verification post-deploy. |
-| **data-analyst** | Unified metrics. Stripe MRR/LTV/churn, email open rates, SEO rankings, ad performance. Cross-channel attribution with Blended MER. |
+| **campaign-operator** | Deploys via Meta Graph API, email providers. **Google Ads REST-`:mutate` deploy (budget → campaign → adGroup → keywords → RSA), brand-exclusion + value-based conversion enforcement.** **ASC+ deployment**, Flood+Underbid, Post ID relaunching, EMQ verification post-deploy. |
+| **data-analyst** | Unified metrics. Stripe MRR/LTV/churn, email open rates, SEO rankings, ad performance. **Google Ads metrics via `google-ads-open-cli`.** Cross-channel attribution with Blended MER. |
 | **email-marketer** | Designs drip sequences matching your project's existing email design system. Welcome, activation, retention, win-back, upsell. |
 | **seo-engineer** | Technical SEO audit, GEO optimization, programmatic content, schema markup. |
 | **landing-page-builder** | Generates pages using your project's actual UI library and Tailwind config. Outputs production code. |
@@ -228,12 +228,12 @@ The HVA engine — creative discovery at machine speed. A standalone loop parall
 
 ## Skills
 
-17 domain knowledge stacks — the brain that agents reference for decisions.
+16 domain knowledge stacks — the brain that agents reference for decisions.
 
 | Skill | Domain | Key April 2026 Knowledge |
 |-------|--------|--------------------------|
 | `meta-ads` | Meta Ads API + `meta ads` CLI | **Andromeda, Entity Clustering, ARM, EMQ 8+, ASC+, Creative Fatigue Indicator, Attribution Upheaval, Post ID relaunching, native CLI integration (April 2026)** |
-| `google-ads` | Google Ads | Performance Max, AI Max, Demand Gen, Shopping feed optimization, AI Overviews |
+| `google-ads` | Google Ads (full parity) | **`google-ads-open-cli` read/measure/audit + GAQL mining → REST `:mutate` deploy. Performance Max, AI Max, Demand Gen, Shopping feed optimization, AI Overviews. 9 rules files + Google Ads Atlas 2026 (18 Parts).** |
 | `email-marketing` | Email drips | Deliverability (SPF/DKIM/DMARC), provider APIs (Resend/SendGrid/Postmark) |
 | `seo-engineering` | SEO/GEO | Technical SEO, content strategy, schema markup, AI citation optimization |
 | `landing-page-patterns` | Conversion pages | Hero patterns, social proof, CTA optimization, design system integration |
@@ -430,7 +430,7 @@ AARRR Funnel Health:
 |---|---|
 | **Claude Code** | Latest version with plugin support |
 | **Meta Ads** | Optional — System User token from live-mode Business app. Plugin auto-installs the official `meta ads` CLI (`pip install meta-ads`) during `/gtm-setup`. |
-| **Google Ads** | Optional — Customer ID + developer token |
+| **Google Ads** | Optional — Customer ID + developer token. Plugin auto-installs `google-ads-open-cli` (`npm install -g google-ads-open-cli`, read/measure) during `/gtm-setup`; deploys via Google Ads REST `:mutate`. |
 | **TikTok Ads** | Optional — Business account for Spark Ads |
 | **PostHog** | Optional — Project + Personal API keys for diagnostics |
 | **Stripe** | Optional — For revenue diagnostics (MRR, LTV, churn) |

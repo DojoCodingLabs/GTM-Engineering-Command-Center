@@ -450,10 +450,76 @@ Based on the detected email provider:
 
 ### 3.8 Google Ads (optional)
 
-1. **Google Ads Customer ID**
-   - "Enter your Google Ads customer ID (format: XXX-XXX-XXXX) -- optional, press Enter to skip"
-2. **Google Ads Developer Token**
-   - "Enter your Google Ads developer token"
+Google Ads execution is **HYBRID**. READ/MEASURE/AUDIT runs through the read-only `google-ads-open-cli` (a Node CLI). WRITE/DEPLOY runs through the Google Ads REST API `:mutate` endpoints via `curl` — there is NO first-party CLI that mutates. Both paths read the **same** secrets from `.env.gtm`, so you provision once. Full CLI reference: `skills/google-ads/rules/gads-cli.md`. Knowledge base: Atlas Part 1 (account model), Atlas Appendix A (auth).
+
+**The two-auth-surface trap:** one OAuth credential (client ID/secret → access token) plus one developer token authorizes *both* the read CLI and the write-curl path. Provision them once into `.env.gtm`; do not mint separate creds per path.
+
+**Step A — Install the read CLI**
+
+Check if `google-ads-open-cli` is already on PATH and install if missing (Node 18+ — contrast Meta's Python `uv`/`pip` toolchain; this is npm):
+
+```bash
+command -v google-ads-open-cli >/dev/null 2>&1 && google-ads-open-cli --version \
+  || npm install -g google-ads-open-cli
+```
+
+If install fails, abort the Google Ads setup and tell the user: "Could not install `google-ads-open-cli`. Ensure Node 18+ and `npm` are available (`node --version`), then re-run `/gtm-setup`." Skip §3.8 entirely if the user opts out — the read CLI is the dependency root for every metrics/audit command, and the write-curl path still needs the access token from Step B.
+
+Record the installed version: `GOOGLE_ADS_CLI_VERSION=$(google-ads-open-cli --version | awk '{print $NF}')`.
+
+**Step B — Collect credentials**
+
+Ask for the following, one at a time:
+
+1. **Customer ID**
+   - "Enter your Google Ads customer ID (format: `XXX-XXX-XXXX`)"
+   - Strip the dashes to the bare 10-digit ID before storing (e.g. `123-456-7890` → `1234567890`). Every CLI call and `:mutate` URL uses the dashless form.
+   - If detected in Phase 1, pre-fill: "Detected customer ID: {id} -- use this? (yes/no)"
+
+2. **Login Customer ID (MCC)**
+   - "Enter your manager (MCC) account ID if this account is accessed through one (format: `XXX-XXX-XXXX`). Press Enter if not — defaults to the customer ID above."
+   - Strip dashes to 10 digits. If blank, set equal to the customer ID. This becomes `GOOGLE_ADS_LOGIN_CUSTOMER_ID` and the `login-customer-id` header on write-curl calls.
+
+3. **Developer Token**
+   - "Enter your Google Ads developer token."
+   - "Find it at: Google Ads → Tools → API Center (requires a manager account with API access approved)."
+
+4. **OAuth Client ID + Client Secret**
+   - "Enter your OAuth2 Client ID (from Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client ID)."
+   - "Enter the matching Client Secret."
+   - Alternatively: "If you already have a valid OAuth access token, paste it here to skip the browser auth flow."
+
+Run the CLI auth flow to mint/store credentials at `~/.config/google-ads-open-cli/credentials.json`:
+
+```bash
+google-ads-open-cli auth login \
+  --developer-token="$GOOGLE_ADS_DEVELOPER_TOKEN" \
+  --client-id="$GOOGLE_ADS_CLIENT_ID" \
+  --client-secret="$GOOGLE_ADS_CLIENT_SECRET"
+```
+
+(If the operator supplied a pre-minted access token instead, skip `auth login` and rely on the `GOOGLE_ADS_ACCESS_TOKEN` env var written in Step C — the CLI reads it directly.)
+
+**Step C — Write `.env.gtm` and verify**
+
+Append the Google Ads secrets to `.env.gtm` (gitignored). The read CLI **and** the write-curl path both read these three env vars — provision both surfaces from the one OAuth cred + one dev token (the two-auth-surface trap above):
+
+```bash
+cat >> .env.gtm << ENVEOF
+GOOGLE_ADS_ACCESS_TOKEN='{minted_or_pasted_access_token}'
+GOOGLE_ADS_DEVELOPER_TOKEN='{collected_developer_token}'
+GOOGLE_ADS_LOGIN_CUSTOMER_ID='{login_customer_id_dashless}'
+ENVEOF
+chmod 600 .env.gtm
+```
+
+Verify auth + connectivity in a single read smoke test (lists accounts the creds can see — this proves the OAuth token, the developer token, and network reachability all at once):
+
+```bash
+google-ads-open-cli customers
+```
+
+Normalized exit handling (this is a **different binary** from the Meta CLI — do NOT assume Meta's literal `0`/`3`/`4` exit codes): capture stderr. If exit is non-zero and stderr matches `/auth|token|credential|unauthenticated|permission/i`, treat it as an auth error — tell the operator to re-run `google-ads-open-cli auth login` (or refresh `GOOGLE_ADS_ACCESS_TOKEN`). Otherwise treat it as an API error — back off and retry once. On success, confirm the target customer ID appears in the returned list, then record `GOOGLE_ADS_CLI_VERSION` (from Step A) into config.
 
 ## Phase 4: Config File Generation
 
@@ -494,8 +560,15 @@ Write `.gtm/config.json` with the collected values:
     "webhook_secret": "{collected or null}"
   },
   "google_ads": {
-    "customer_id": "{collected or null}",
-    "developer_token": "{collected or null}"
+    "customer_id": "{collected, dashless 10-digit or null}",
+    "login_customer_id": "{collected MCC dashless, or = customer_id}",
+    "developer_token": "{collected — also written to .env.gtm}",
+    "api_version": "v17",
+    "cli_version": "{detected from google-ads-open-cli --version}",
+    "conversion_action_ids": {
+      "primary": null,
+      "micro": []
+    }
   },
   "product": {
     "name": "{collected}",
@@ -544,6 +617,8 @@ Write `.gtm/config.json` with the collected values:
 
 **`targets` + `hva` blocks (for the High-Velocity Advertising engine).** `targets.target_cpa` is your CPA/CAC goal in account currency — set it if you intend to run `/hva`, because CLEAR-E and the Read Ladder are spend-relative to it (the HVA Desk scorer refuses to run without it). `targets.primary_event` is the qualifying CAPI conversion; `targets.micro_events` are the leading micro-conversions. The `hva` block defaults to the safest autonomy mode (`recommend` — recommend-only, no unattended writes); the operator raises it to `cut-auto` or `full-auto` deliberately once they trust the loop. If the user is not setting up paid advertising now, leave `target_cpa` as `null` — `/hva` Phase 0 will prompt for it later. See `skills/high-velocity-advertising/SKILL.md`.
 
+**Google Ads notes.** `developer_token` is duplicated into `.env.gtm` (the read CLI and write-curl path consume it as `GOOGLE_ADS_DEVELOPER_TOKEN`); the copy in `config.json` is for agent introspection only. `login_customer_id` equals `customer_id` for standalone accounts, or the MCC ID for managed accounts. `api_version` pins the REST `:mutate` endpoint version (`v17`) for the write-curl path. **`conversion_action_ids.primary` is load-bearing**: it is the gating value for the operator pre-flight (Atlas Laws 2/3 — never deploy spend against an unconfigured or unverified conversion). It starts `null`; deploy/optimize commands must refuse to run until it is populated. Populate it by listing actions with `google-ads-open-cli conversion-actions <customer_id>` and recording the resource ID of the primary conversion. `micro` holds secondary/upper-funnel conversion action IDs (lead, add-to-cart) as an array.
+
 ## Phase 5: Gitignore Safety
 
 1. Check the project root `.gitignore` for `.gtm/config.json`, `.env.gtm`, or `.gtm/` patterns.
@@ -552,7 +627,7 @@ Write `.gtm/config.json` with the collected values:
    - Tell the user: "Added `.gtm/config.json` and `.env.gtm` to .gitignore to protect your API keys."
 3. Verify `.gtm/.gitignore` exists (from template) and includes `config.json`.
 
-**Why two files?** The Meta Ads CLI reads secrets from `.env.gtm` as environment variables (`ACCESS_TOKEN`, `AD_ACCOUNT_ID`, `BUSINESS_ID`). Non-secret IDs (pixel, page, IG actor) live in `.gtm/config.json` for agent introspection. Both files must be gitignored.
+**Why two files?** The Meta Ads CLI reads secrets from `.env.gtm` as environment variables (`ACCESS_TOKEN`, `AD_ACCOUNT_ID`, `BUSINESS_ID`). The Google Ads paths read `GOOGLE_ADS_ACCESS_TOKEN`, `GOOGLE_ADS_DEVELOPER_TOKEN`, and `GOOGLE_ADS_LOGIN_CUSTOMER_ID` from the same `.env.gtm` — the read-only `google-ads-open-cli` and the write-curl `:mutate` path both source these, so one provisioning serves both surfaces. Non-secret IDs (Meta pixel/page/IG actor; Google customer ID, login customer ID, conversion action IDs) live in `.gtm/config.json` for agent introspection. Both files must be gitignored.
 
 ## Phase 6: Initial AARRR Funnel Health
 
@@ -584,7 +659,7 @@ GTM Command Center Setup Complete!
 | Stripe | Connected | {N} products |
 | Gemini | Connected | Image generation ready |
 | ElevenLabs | Skipped | Video voiceover unavailable |
-| Google Ads | Skipped | Not configured |
+| Google Ads | Connected | Customer: {id}, primary conversion: {set|UNSET — blocks deploy} |
 
 AARRR Funnel Health (infrastructure-based):
   Acquisition: {score}/100

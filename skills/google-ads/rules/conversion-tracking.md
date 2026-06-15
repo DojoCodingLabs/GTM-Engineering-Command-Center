@@ -279,6 +279,170 @@ function getStoredGclid(): string | null {
 }
 ```
 
+## Enhanced Conversions for Leads
+
+> Atlas Part V — "the single highest-return work in the entire Atlas." First-party, consent-aware, server-side signal is the prerequisite for every advanced tactic (value-based bidding, AI Max, broad-match).
+
+Enhanced Conversions for Leads (ECL) hashes the lead email with **SHA-256** and matches it to signed-in Google users **even when the GCLID expired or was never captured**. This is what lets a closed-won deal months later still credit the click that started it — it does not depend on a cookie surviving.
+
+**WHITEHAT | 10/10** — Hashing first-party data the user volunteered and matching it to consenting signed-in users is the model Google built ECL for; no policy exposure.
+
+**Match-rate targets (B2B SaaS):**
+
+| Match rate | Read |
+|------------|------|
+| 40–65% | Healthy. Target band for B2B SaaS. |
+| 30–40% | Acceptable; check phone normalization and address fields. |
+| **< 30%** | **Field-mapping problem.** Email not normalized (trim + lowercase before hash), wrong column mapped, or hashes double-encoded. Fix mapping before scaling spend. |
+
+**Enable ECL (account-level diagnostics — READ via CLI; toggle is a WRITE via the Customer settings UI/API):**
+
+```bash
+# READ-ONLY audit: confirm ECL-capable conversion actions exist and their counts
+# Reference: skills/google-ads/rules/gads-cli.md
+google-ads-open-cli conversion-actions <customer_id> --format compact
+
+# Pull lead-action volume to sanity-check whether modeling/ECL will even engage
+google-ads-open-cli query <customer_id> \
+  "SELECT conversion_action.name, metrics.all_conversions
+   FROM conversion_action WHERE conversion_action.category = 'LEAD'"
+```
+
+The hashed-payload upload itself is the **offline import / `offlineUserDataJobs`** flow already documented above (hashed_email identifier). ECL = that loop, keyed on email instead of GCLID.
+
+## Consent Mode v2 Mechanics
+
+Mandatory for **EEA and UK** traffic since **March 2024**. Without it, remarketing lists stop populating and modeled conversions stop reporting for that traffic. It governs four parameters:
+
+| Param | Controls |
+|-------|----------|
+| `ad_storage` | Advertising cookies (read/write). |
+| `analytics_storage` | Site analytics cookies. |
+| `ad_user_data` | Whether user data is sent to Google for ads. |
+| `ad_personalization` | Whether remarketing / personalized lists populate. |
+
+**Basic vs Advanced:**
+
+- **Basic** — tags do not load at all until consent is granted. No signal from deniers.
+- **Advanced** — when a user denies, tags **do not read/write advertising cookies** but send **cookieless pings** (timestamp, user agent, ad-click context). Google's models use these to reconstruct lost conversions.
+
+**Modeling threshold:** roughly **700 ad clicks over 7 days per country + domain** before modeling engages. Below that, denied traffic is simply lost — no model to fill the gap.
+
+```html
+<!-- Default to denied BEFORE gtag config; flip to granted on consent grant -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {
+    ad_storage: 'denied',
+    analytics_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    wait_for_update: 500
+  });
+</script>
+<!-- ... AW- config loads here ... -->
+<script>
+  // CMP callback when user accepts
+  function onConsentAccepted() {
+    gtag('consent', 'update', {
+      ad_storage: 'granted',
+      analytics_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted'
+    });
+  }
+</script>
+```
+
+### Recovery numbers, stated honestly
+
+Google's headline **"up to 70%" recovery is a ceiling for high-volume properties, not a default.** Plan against the realistic figures:
+
+| Setup | Realistic recovery |
+|-------|--------------------|
+| Modeling alone (Advanced Consent Mode, nothing else) | **~17% median** conversion lift |
+| Enhanced Conversions + Advanced Consent Mode + server-side tagging (sGTM) | **30–50%** recovery |
+| Google's marketing headline | "up to 70%" — high-volume ceiling only |
+
+**WHITEHAT | 10/10** — Server-side tagging with explicit consent verification and Advanced Consent Mode respect user choice under GDPR and the DMA.
+
+**GRAYHAT | 6/10** — Cross-domain cookie syncing to build audiences across unaffiliated sites bypasses modern browser privacy controls; allowed in places but watch for policy drift and CMP/regulator scrutiny.
+
+**BLACKHAT | 1/10** — Documented so you recognize it — never deploy. Consent-faking scripts that pass `granted` when the user opted out violate privacy law and Google policy and invite immediate account suspension.
+
+## Server-Side Tagging (sGTM)
+
+Run the tagging server on a **private first-party subdomain** (e.g. `tracking.yourbrand.com`) so requests are same-site:
+
+- **Bypasses Safari Intelligent Tracking Prevention (ITP)** and browser ad blockers — first-party cookies set server-side get full lifetimes, not ITP's 7-day cap.
+- **Forwards the `gcs` and `gcd` consent strings** to the server before dispatching, so consent state travels with the payload.
+- **Dispatches hashed payloads via the Conversions API** (server-to-server), not from the browser — payloads survive ad blockers and cookie purges.
+
+```
+Browser ── first-party request ──► tracking.yourbrand.com (sGTM container)
+                                         │  reads gcs/gcd consent strings
+                                         │  hashes email/phone (SHA-256)
+                                         └─► Google Ads Conversions API (server-side)
+```
+
+This is the infrastructure layer that turns the 30–50% recovery band above from aspiration into reality; ECL and Consent Mode v2 underdeliver without it.
+
+## The CRM Offline Conversion Import Loop
+
+For long-cycle SaaS and high-ticket funnels, web-tag tracking cannot connect a click today to a closed-won sale months later. The industry-standard fix is the **GCLID-to-CRM loop**:
+
+```
+1. Capture GCLID in a hidden form field  ──►  save to CRM lead record
+2. Deal advances: MQL → SQL → Opportunity → Closed-Won
+3. At each milestone, upload that stage back to Google (GCLID + value)
+   via conversionAdjustments:upload / offlineUserDataJobs (see API blocks above)
+4. Google credits the original ad click with real pipeline outcomes
+```
+
+**Hidden form field — captures GCLID for the CRM (uses the `getStoredGclid()` helper above):**
+
+```html
+<input type="hidden" name="gclid" id="gclid_field" />
+<script>document.getElementById('gclid_field').value = getStoredGclid() || '';</script>
+```
+
+**Window math — GCLIDs expire after 90 days.** Widen attribution to at least a **30-day click / 90-day conversion** window so the loop can fire before the GCLID dies:
+
+```bash
+# value_settings live on the conversion action; widen via :mutate (WRITE — defaults below are PAUSED-safe metadata, not campaign state)
+POST /customers/{customer_id}/conversionActions:mutate
+{
+  "operations": [{
+    "update": {
+      "resource_name": "customers/{customer_id}/conversionActions/{id}",
+      "click_through_lookback_window_days": 90,
+      "view_through_lookback_window_days": 30
+    },
+    "update_mask": "click_through_lookback_window_days,view_through_lookback_window_days"
+  }]
+}
+```
+
+**Stage values (demo-led SaaS) — money is in dollars here at the conversion-action level; the API's `transaction_amount.value` is also a decimal dollar value, NOT micros:**
+
+| Stage | Import value |
+|-------|--------------|
+| MQL | $10–50 |
+| SQL | $100–500 |
+| Closed-Won | Actual deal value |
+
+This matches how mature HubSpot and Salesforce integrations are implemented in the field, and feeds value-based bidding the real revenue gradient.
+
+**Why it pays (directional, mostly self-reported — treat as direction, not guarantee):**
+
+| Source | Result |
+|--------|--------|
+| Involve Digital | ~3x more pipeline at ~31% lower CPL for B2B SaaS running offline conversion tracking. |
+| GrowthSpree | Attribution coverage 25–40% (default setups) → **85–95%** with full implementation in 30 days; SQL volume +30–50% at the same spend by day 90. |
+
+**WHITEHAT | 10/10** — Importing real revenue and pipeline outcomes is the operational core of value-based bidding and the foundation of a defensible account.
+
 ## Conversion Tracking Debugging
 
 ### Common Issues and Fixes

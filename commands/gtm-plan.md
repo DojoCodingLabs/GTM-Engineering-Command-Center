@@ -96,6 +96,17 @@ Map the objective to Meta campaign objectives:
 | traffic        | OUTCOME_TRAFFIC | LINK_CLICKS |
 | app_installs   | OUTCOME_APP_PROMOTION | APP_INSTALLS |
 
+Map the objective to Google Ads campaign goals (Search-first; Google plans KEYWORDS / INTENT, not audiences):
+| User Objective | Google Campaign | Bid Strategy (gate-aware) | Primary Conversion Action |
+|----------------|-----------------|---------------------------|---------------------------|
+| signups | Search (non-brand high-intent) | MAXIMIZE_CONVERSIONS until ~30 conv/mo → TARGET_CPA | signup / free-trial |
+| purchases | Search + PMax feeder | MAXIMIZE_CONVERSIONS → TARGET_CPA → tROAS (≥60d value data) | purchase |
+| leads | Search (problem + category) | MAXIMIZE_CONVERSIONS until ~30 conv/mo → TARGET_CPA | lead form / demo request |
+| traffic | Search (broad discovery) | MAXIMIZE_CLICKS (`targetSpend`) only until conversion data exists | n/a (clicks) |
+| app_installs | App / Demand Gen | MAXIMIZE_CONVERSIONS (install) | app install |
+
+Bidding API fields are GATED on the migration ladder (Atlas Part IV) — never plan a rung the account has not earned. The campaign-operator enforces these gates at deploy. Full ladder in the Google Ads Plan block below and `skills/google-ads/rules/smart-bidding.md`.
+
 For non-Meta channels, map the objective to channel-specific goals:
 | User Objective | Email Goal | SEO Goal | Landing Goal |
 |----------------|-----------|----------|-------------|
@@ -118,6 +129,37 @@ For non-Meta channels, map the objective to channel-specific goals:
    - Which audiences had the lowest CPA?
    - Which placements performed best?
    - What time-of-day patterns emerged?
+
+> **CONTRAST — Meta plans AUDIENCES, Google plans KEYWORDS / INTENT.** Steps 2-3 above are Meta's audience-segment analysis. When **Google is selected**, do NOT run audience-segment analysis for Google; run the keyword / intent-ladder analysis below instead. (Meta planning logic is unchanged.)
+
+### Google Ads — Keyword / Intent Analysis (run only if Google selected)
+
+This is a READ/MEASURE step. It uses the read-only `google-ads-open-cli` (recipes in `skills/google-ads/rules/gads-cli.md`); it never writes. Money returns in **micros** — divide every `cost_micros` by 1,000,000 for dollars.
+
+**Path A — account already exists (you have a customer ID):** mine real demand before inventing it.
+- Pull existing search terms (last 30-90d) to see what queries actually trigger spend and convert:
+  ```bash
+  google-ads-open-cli query <customer-id> \
+    "SELECT search_term_view.search_term, metrics.clicks, metrics.cost_micros, metrics.conversions \
+     FROM search_term_view WHERE segments.date DURING LAST_90_DAYS \
+     ORDER BY metrics.cost_micros DESC" --format compact
+  ```
+- Pull current keyword performance + match types and impression share to find gaps:
+  ```bash
+  google-ads-open-cli keyword-stats <customer-id> --start <YYYY-MM-DD> --end <YYYY-MM-DD>
+  google-ads-open-cli keywords <customer-id>          # existing keywords + match types
+  google-ads-open-cli negative-keywords <customer-id> # existing negatives / shared sets
+  ```
+- N-gram the search terms (tokenize into 1/2/3-grams, roll up cost ÷ 1e6 and conversions) to seed both new keyword themes AND the negative list. Full recipe: `skills/google-ads/rules/gads-cli.md` §7a.
+- Normalized exit handling for the read CLI: capture stderr; if non-zero and stderr matches `/auth|token|credential|unauthenticated|permission/i` → auth error, tell the operator to re-run `google-ads-open-cli auth login`; else → API error (backoff + one retry). (This is a different binary from Meta's — do not assume Meta's literal exit codes.)
+
+**Path B — no account / no history yet:** derive intent from `product.landing_url` and competitors.
+- Extract the value prop, feature nouns, outcome verbs, and category terms from the landing page → these become **category** and **problem** keyword seeds.
+- Derive **competitor** seeds from named competitors (`{competitor} alternative`, `{competitor} vs`, `{competitor} pricing`).
+- Derive **brand** seeds from `product.name`.
+- Expand each seed across the 4 intent types (informational / commercial / transactional / navigational) per `skills/google-ads/rules/keywords-match-types.md` Step 2.
+
+**Output of this phase:** a keyword set bucketed into the five intent lanes (brand / high-intent product / competitor / problem-aware / remarketing), each lane tagged with a candidate match type. This bucketing — not audience segments — is what feeds the Google plan block.
 
 ## Phase 3: Campaign Structure (Per Channel)
 
@@ -150,10 +192,74 @@ For each ad set, define:
 
 ### Google Ads Plan (if selected)
 
-- Campaign type (Search, Display, Performance Max)
-- Keyword targets (from SEO research or user input)
-- Ad group structure
-- Budget allocation between Meta and Google
+> **Meta plans AUDIENCES. Google plans KEYWORDS / INTENT.** The Meta block above splits by audience segment; this block splits by INTENT THEME. Build it from the Phase 2 keyword/intent buckets, not from audience personas. Cross-ref `agents/media-buyer.md` (Google Ads Planning) and `skills/google-ads/rules/keywords-match-types.md`. All money below is in **micros** (budget = `amountMicros`, 1,000,000 = $1). All campaign writes deploy **PAUSED**.
+
+#### Structure: one campaign per intent lane → one ad group per tight keyword theme
+
+Google's hierarchy is `Campaign (1 intent lane + budget + bid strategy) → Ad Group (1 tight keyword theme) → RSA`. Each intent lane is its OWN campaign with its OWN budget and bid strategy — lanes never share budget (Atlas Part II intent ladder). Inside a lane, split into ad groups BY INTENT THEME (one tight 5-10 keyword theme per ad group) — this is what drives Quality Score; a 50-keyword ad group tanks it (`keywords-match-types.md`, Ad Group Granularity).
+
+```
+Campaign: Brand (Pillar 1)
+  └── Ad Group: {product_name} core        → [product_name], [product_name pricing]
+  └── Ad Group: {product_name} login/nav   → [product_name login], [product_name app]
+Campaign: High-Intent Product (Pillar 2)
+  └── Ad Group: {outcome} theme            → "{outcome} software", "{outcome} tool"
+  └── Ad Group: {use_case} theme           → "{category} for {use_case}"
+Campaign: Competitor Conquest (Pillar 3 — ISOLATED budget + QS drag)
+  └── Ad Group: {competitor} alternative   → "{competitor} alternative", "{competitor} vs"
+Campaign: Problem-Aware (Pillar 4)
+  └── Ad Group: {pain_point} theme         → "how to {solve_problem}", "{pain_point} solution"
+Campaign: Remarketing / Nurture (Pillar 5)
+  └── Ad Group: site visitors / cart       → audience lists, RLSA / Demand Gen
+```
+
+#### Keyword tiers + match types (the intent ladder)
+
+Five lanes, one campaign each, no cross-lane budget sharing. Cross-ref `agents/media-buyer.md` (Keyword Tiers) and `skills/google-ads/rules/keywords-match-types.md`:
+
+| Lane (Pillar) | Intent | Keyword tier | Default match type | Notes |
+|---------------|--------|--------------|--------------------|-------|
+| 1. Brand | Navigational, own name | `{product_name}`, `{product_name} pricing` | Exact `[ ]` | Cheap, defends SERP, isolate from QS drag |
+| 2. High-intent product | Transactional / outcome | `{outcome} software`, `{category} for {use_case}` | Phrase `" "` + Broad (Smart Bidding only) | Phrase converts best; broad only past the conv floor |
+| 3. Competitor | Comparison / switch | `{competitor} alternative`, `{competitor} vs` | Exact + Phrase | OWN campaign; NO DKI; trademarks OUT of ad copy |
+| 4. Problem-aware | Informational | `how to {solve_problem}`, `{pain_point} solution` | Broad (Smart Bidding) | Needs strong landing page; expect lower CVR |
+| 5. Remarketing | Re-engage | n/a — audience lists | n/a | RLSA / Demand Gen, not keywords |
+
+Match-type doctrine (broad-match era): **broad scales spend, phrase converts, exact controls — none is obsolete.** Broad match ONLY with Smart Bidding (Target CPA / Max Conversions); broad + Manual CPC = budget drain. On tight budgets, do NOT mix broad and exact in one campaign — broad starves exact of delivery; split them into separate campaigns (`keywords-match-types.md`).
+
+#### Bidding strategy — GATED on the conversion-migration ladder (Atlas Part IV)
+
+Plan the bid strategy each lane has EARNED — climb one rung at a time, never skip. The campaign-operator enforces these gates at deploy:
+
+| Rung / Strategy | Gate (the migration ladder) | API field |
+|-----------------|-----------------------------|-----------|
+| Maximize Clicks | No conversion data yet; exit ASAP once clicks/CTR exist | `targetSpend` |
+| Maximize Conversions | Conversion tracking live, below the tCPA gate | `maximizeConversions` |
+| Target CPA | **~30 conv/mo/campaign** (the tCPA gate — below it Smart Bidding starves) | `targetCpa` (`targetCpaMicros`, micros) |
+| Target ROAS / Max Conv Value | **~60 days of value data AND ≥2 distinct conversion values** | `maximizeConversionValue` → `targetRoas` |
+
+`targetCpaMicros` IS micros (1e6 = $1); `targetRoas` is a raw multiplier (`4.0` = 400%), NOT micros. Set the initial tCPA/tROAS at 70-80% of trailing actual (looser, keeps delivery open), then tighten ~10%/2-week hold. Most new/thin Google plans start lanes 2 and 4 on `maximizeConversions` because they have not crossed the 30-conversion gate; brand (lane 1) can sit on Manual CPC or Max Clicks with strict caps. Full ladder: `skills/google-ads/rules/smart-bidding.md`.
+
+#### Negative-keyword + brand-exclusion plan (hand the operator the list)
+
+Negatives are the real fence in the broad-match era — not match-type hierarchy (`keywords-match-types.md`, AI-Era Nuance). Plan them up front:
+
+- **Account-level negative list** (always, unless the product genuinely offers it): `free`, `tutorial`, `course`, `salary`, `jobs`, `review`, `download`, `cracked`, `torrent`.
+- **Cross-lane brand exclusions:** add `{product_name}` as a NEGATIVE in lanes 2-4 so brand traffic stays in the brand campaign (clean attribution, no inflated non-brand conversions). Add competitor names as negatives in lanes 1, 2, 4 so only the competitor campaign serves on them.
+- **N-gram-driven negatives:** once data exists, mine the search-terms report (Phase 2 Path A) and add the worst non-converting grams. Avg 36% of spend is wasted on unmonitored broad terms (`keywords-match-types.md`, N-gram mining).
+- **Deploy path:** adding negatives is a WRITE — it does NOT go through the read CLI. Negative-keyword creation uses the Google Ads REST API `:mutate` endpoints via curl (no first-party CLI mutates); new negative campaigns/ad-groups deploy PAUSED.
+
+**WHITEHAT | 10/10** — N-gram waste aggregation and brand-exclusion negatives analyze your own account data to cut wasted spend; pure measurement-driven hygiene.
+
+**WHITEHAT | 9/10** — Competitor "alternative"/"vs" bidding in its own campaign with trademarks kept out of ad copy is permissible fair-use; isolate the budget and Quality Score drag.
+
+**BLACKHAT | 1/10** — Documented so you recognize it — never deploy: Dynamic Keyword Insertion that auto-inserts a competitor's trademarked name into your headline is an instant trademark-policy violation. Never enable DKI in a competitor campaign.
+
+#### RSA + URL per ad group
+
+Each ad group gets one Responsive Search Ad: 15 headlines (30 char), 4 descriptions (90 char, ≥2 with a CTA), final URL = `config.product.landing_url` with `?utm_source=google&utm_medium=cpc&utm_campaign={campaign}&utm_term={keyword}`. Pin the brand/keyword theme into ≥2 headlines to lift Quality Score. Cross-ref `agents/media-buyer.md` (RSA Structure).
+
+> **Budget split:** the five-pillar internal allocation for the Google daily budget lives in Phase 4. Cross-channel split between Meta and Google follows `agents/media-buyer.md` Channel Budget Allocation.
 
 ### Email Plan (if selected)
 
@@ -200,13 +306,24 @@ Total Daily Budget: ${budget}
 | Landing | $0 (one-time) | -- | Conversion |
 | Outreach | $0 (tool cost) | -- | Direct outreach |
 
-Meta Ads Breakdown:
+Meta Ads Breakdown (by AUDIENCE):
 | Ad Set | Audience | Daily Budget | % |
 |--------|----------|-------------|---|
 | AS1 | {desc} | ${amount} | X% |
 | AS2 | {desc} | ${amount} | X% |
 | AS3 | {desc} | ${amount} | X% |
+
+Google Ads Breakdown (by INTENT LANE — five-pillar split, Atlas Part II):
+| Pillar / Campaign | Intent lane | Daily Budget | % | Bidding + match |
+|-------------------|-------------|-------------|---|-----------------|
+| 1. Brand protection | own name | ${amount} | 5-7% | Manual CPC, exact |
+| 2. High-intent product | outcome / category | ${amount} | 50-60% | tCPA, phrase + broad |
+| 3. Competitor conquest | alternative / vs | ${amount} | 15-20% | tCPA, exact + phrase |
+| 4. Problem-aware | how-to / pain | ${amount} | 10-15% | Max Conversions, broad |
+| 5. Remarketing / nurture | site / cart lists | ${amount} | 10% | Max Conversions, audiences |
 ```
+
+> **Google budget is in micros at deploy** — each daily `${amount}` becomes `amountMicros` (× 1,000,000) on the campaign budget. The percentages above are a steady-state starting allocation. For a NEW/thin account, override with the PHASED split (Atlas Part XIV): Phase 1 (≤$10k/mo) ~90% into Pillar 2 bottom-funnel Search to set baselines; Phase 2 ($10-30k) ~70% Search / 30% PMax + Customer Match; Phase 3 ($30k+) layer YouTube / Demand Gen at ~15-20% for the demand-creation lane. Do not fund competitor/problem-aware lanes until the high-intent lane has crossed its conversion floor.
 
 Include recommendations:
 - Minimum viable budget per ad set (typically $5-10/day for meaningful learning)
@@ -249,6 +366,19 @@ Set benchmark KPIs based on objective and historical data:
 | Email Open Rate | X% | 20-30% |
 | Email Click Rate | X% | 2-5% |
 | Landing Conv. Rate | X% | 2-5% |
+
+If Google Ads is selected, add the Google-native KPIs (keyword/auction metrics Meta has no analog for):
+
+| Google KPI | Target | Benchmark / Note |
+|------------|--------|------------------|
+| Search Impression Share (SIS) | ≥ 65% brand, ≥ 40% non-brand | `search_impression_share`; low SIS = budget- or rank-limited |
+| Search Lost IS (budget) | < 10% | If high, budget caps delivery — raise budget before bids |
+| Search Lost IS (rank) | < 20% | If high, Quality Score / bid is the limiter, not budget |
+| Quality Score (avg) | ≥ 7/10 | Driven by tight ad-group themes + RSA keyword pinning + page relevance |
+| Search CPC | $X | Google's per-CLICK metric — contrast Meta's CPM (per-1000-impression) |
+| Cost / conversion (CPA) | ≤ target | `cost_micros ÷ 1e6 ÷ conversions`; the migration-ladder gate watches this |
+
+> **CPC vs CPM is the channel contrast in one line:** Google = pay-per-CLICK on active search intent (track SIS + Quality Score + CPC); Meta = pay-per-CPM on interrupt audiences (track CPM + CTR). Do not benchmark Google CPC against Meta CPM — different units. All Google cost figures arrive as `cost_micros`; divide by 1,000,000 for dollars.
 
 If historical data exists in `.gtm/metrics/`, use those benchmarks instead of industry averages.
 
