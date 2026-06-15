@@ -1,4 +1,105 @@
-# Google Ads Campaign Types -- Deep Dive
+# Google Ads Account Architecture
+
+Architecture doctrine first (Atlas Part II), then the campaign-type reference. Structure decides whether Smart Bidding has enough signal density to optimize; everything downstream inherits the choices made here. See also `rules/smart-bidding.md` (bid strategy per pillar) and `rules/performance-max.md` (PMax containment).
+
+> Money note: every budget below is set as `amountMicros` in the REST API (1,000,000 micros = $1). All audit reads come from the read-only CLI (`skills/google-ads/rules/gads-cli.md`); all writes go through the `:mutate` REST endpoints via curl and default to status PAUSED.
+
+## The Death of SKAGs & the Rise of Hagakure
+
+The Single-Keyword-Ad-Group era is over for any account on Smart Bidding. Exact is no longer exact, broad is the default, and granularity now *starves* the algorithm of conversion density instead of controlling it. Roughly 9 of 10 performance marketers favor consolidated, thematic structures. A minority (e.g. Disco Sloth) still defends SKAGs for tiny, low-data, manual-CPC accounts needing strict Quality Score and ad-copy alignment -- defensible only where chance dominates outcomes.
+
+**Hagakure method** (Think with Google) -- the consolidated default:
+
+| Rule | Detail |
+| :---- | :---- |
+| Group by landing-page theme | Ad groups organized around the destination URL, not individual keywords |
+| One URL per ad group | A theme = a page; do not mix destinations in one ad group |
+| Match types | Broad + phrase (let Smart Bidding find queries), fenced by aggressive negatives |
+| RSA assets | Many assets per ad group so Google has combinations to test |
+| Earns-its-own-ad-group threshold | A URL/theme above ~3,000 impressions/week graduates to a dedicated ad group; everything below consolidates |
+| Catch-all | One DSA / AI-Max ad group to sweep low-volume URLs no keyword targets |
+
+Operating rule (Jyll Saskin Gales): **start consolidated, split only when goal, budget, bid strategy, geography, or materially different audience intent genuinely differ.** Splitting for any other reason fragments the signal.
+
+**WHITEHAT | 10/10** — Thematic Hagakure grouping uses Google's native consolidation to concentrate conversion data without manipulating queries.
+**GRAYHAT | 4/10** — Stuffing exact + phrase + broad duplicates of the same term into one campaign "for coverage" cannibalizes budget, muddies reporting, and rarely helps.
+
+## Brand vs Non-Brand Isolation
+
+Atlas Law 2. Mixing brand and non-brand in one campaign lets the bidder chase cheap branded queries to satisfy a blended tROAS/tCPA -- inflating reported performance, hiding weak non-brand terms, and burning budget on traffic that would have converted organically.
+
+The fix: a **dedicated brand campaign** (often manual CPC with strict max-bid caps so Google can't charge premium auction rates for your own name) **+ brand exclusions on every non-brand and automated campaign** (Search, PMax, Demand Gen, AI Max). A tight brand campaign commonly runs ~1,200% ROAS on ~5-7% of budget -- which is exactly why it must be reported *separately*, never smeared across the account. Apply PMax brand exclusions per `rules/performance-max.md`.
+
+**WHITEHAT | 10/10** — Pillar-based brand separation produces transparent reporting and budget control under standard guidelines.
+
+## The Intent Ladder (4-5 lanes)
+
+Isolate distinct intent lanes so incompatible journeys are not force-fit into one bid target. Minimum four lanes; a fifth for SaaS. Lanes never share budget across the ladder.
+
+| Lane | Who | Bidding posture |
+| :---- | :---- | :---- |
+| 1. Brand | Your own name | Manual CPC, max-bid caps, high ROAS / low CPC |
+| 2. Non-brand high intent | Outcome / mechanism / evaluation queries | tCPA, phrase + broad |
+| 3. Broad discovery + expansion | Queries manual research misses | Broad + Smart Bidding, fenced by aggressive negatives |
+| 4. Competitor / conquest | Comparison & alternative queries | Own campaign, never shares core non-brand budget |
+| 5. SaaS only: company-size / use-case clusters | SMB self-serve vs enterprise RFP behave nothing alike | Bid separately |
+
+**Info-product analog** of the ladder: pain-aware → mechanism-aware → competitor → outcome clusters, instead of a single buy-now campaign. Not officially prescribed; this is how operators reconcile thematic consolidation with real funnel differences.
+
+## The Five-Pillar Funnel Budget Matrix
+
+Steady-state allocation (Atlas Part II). For new accounts use the phased version below first.
+
+| Pillar | Budget share | Bidding & match |
+| :---- | :---- | :---- |
+| 1. Brand protection | 5-7% | Manual CPC, exact match |
+| 2. High-intent product | 50-60% | tCPA, phrase + broad |
+| 3. Competitor conquest | 15-20% | tCPA, exact + phrase |
+| 4. Problem-aware | 10-15% | Maximize Conversions, broad |
+| 5. Remarketing / nurture | 10% | Maximize Conversions, audience lists |
+
+Budget shares are set as `amountMicros` on each campaign budget (a 5% pillar of a $20k/mo account = $1,000/mo = 1000000000 micros). Audit current pillar split: `google-ads-open-cli campaign-budgets <id>` and `google-ads-open-cli campaigns <id> --status ENABLED` (read-only; see `skills/google-ads/rules/gads-cli.md`).
+
+## Benchmark Anchors
+
+Directional sanity checks, **not** targets -- wide source variance (Atlas Appendix A). Cost values are dollars (CLI stats report `cost_micros`; divide by 1e6).
+
+| Vertical & model | Avg CPC | Cost / lead | LP CVR | Target deeper CVR |
+| :---- | :---- | :---- | :---- | :---- |
+| SMB B2B SaaS (self-serve) | $3.00-5.50 | $70-100 | 3-5% | 3-5% freemium→paid |
+| Mid-market B2B SaaS | $5.50-12.00 | $150-400 demo | 2.5-4.5% | 13-22% MQL→SQL |
+| Enterprise B2B SaaS | $15-50+ | $800-1,300+ SQL | 1.5-3% | 16-30% opp→won |
+| Low-ticket info product | $1.00-2.50 | $15-30 capture | 8-15% | 5-10% tripwire |
+| High-ticket info product | $4.00-8.00 | $50-120 application | 4-8% | 15-25% call booked |
+
+## Phased Budget
+
+Scale in stages as conversion data stabilizes -- the inverse of running full-funnel from day one (Atlas Part XIV). Override the steady-state matrix until you reach the relevant phase.
+
+| Phase | Monthly spend | Allocation |
+| :---- | :---- | :---- |
+| 1 | ≤ $10k | ~90% bottom-of-funnel Search -- capture immediate intent, establish baselines |
+| 2 | $10k-30k | ~70% Search / 30% PMax; add Customer Match lists (+ Standard Shopping for physical goods) |
+| 3 | $30k+ | Layer in YouTube / Demand Gen at ~15-20% for demand creation |
+
+## Contrarian / Rep-Defiance (structural)
+
+Reps are incentivized toward platform spend, not your efficiency. Use them for implementation details and product availability -- **not** channel mix or budget recommendations in your market (Atlas Part XV). The structural divergences:
+
+| Google rep advice | What operators do structurally |
+| :---- | :---- |
+| Enable auto-apply recommendations | Turn auto-apply OFF -- it opts you into broad match / expansion that lift CPA |
+| Let PMax handle branded search | Apply account-level brand exclusions so PMax chases new customers, not cheap brand demand |
+| Trust optimization score | Ignore it as a performance metric -- a 50%-growth account hitting tROAS scored just 72.8% |
+
+**WHITEHAT | 9/10** — Disabling auto-apply and aggressive brand-negativing are sustainable contrarian controls.
+**WHITEHAT | 8/10** — Ignoring rep bidding/channel advice unless your CRM data agrees is a sound operator hedge.
+
+(Bid-cap and under-bidding divergences are bidding-layer, not structural -- see `rules/smart-bidding.md`.)
+
+---
+
+# Campaign Types -- Deep Dive
 
 ## Search Campaigns
 

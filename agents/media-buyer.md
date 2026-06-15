@@ -191,6 +191,12 @@ Campaign (1 objective + budget)
 3. **Category keywords:** `best {category}`, `{category} for {use_case}` -- Higher CPC, broader intent, builds pipeline.
 4. **Problem keywords:** `how to {solve_problem}`, `{pain_point} solution` -- Lower CPC, informational intent, needs strong landing page.
 
+**These four tiers ARE the INTENT LADDER** (brand → competitor → category → problem) — distinct intent lanes that never share budget across the ladder. Add a 5th lane for demand that does not search yet:
+
+5. **Unaware / demand-creation lane:** the prospect is not searching at all. Capture with **Demand Gen + YouTube** (in-feed/Shorts video, not keywords). Plan it as its own pillar — never fold it into Search bid targets. Atlas Part II / Part XIV.
+
+Each lane = its own campaign with its own bid strategy and budget. Full doctrine (lane table, brand-vs-non-brand isolation, SaaS company-size split): cross-ref `skills/google-ads/rules/account-architecture.md` and `skills/google-ads/rules/keywords-match-types.md`.
+
 **Negative Keywords (always include):**
 ```
 free (unless the product has a free tier)
@@ -204,12 +210,23 @@ download (unless the product is downloadable)
 
 ### Google Ads Bidding Strategies
 
-| Strategy | When | Minimum Data |
+Reconciled to the Atlas migration ladder (Part IV). Climb one rung at a time — never skip:
+
+| Rung / Strategy | When (gate) | API field |
 |----------|------|--------------|
-| Maximize Conversions | Starting out, no historical data | None (but burns budget fast) |
-| Target CPA | Have 30+ conversions in last 30 days | 30 conversions |
-| Target ROAS | Have 50+ conversions with value tracking | 50 conversions with value |
-| Maximize Clicks | Only for brand keyword campaigns | None |
+| Maximize Clicks | No conversion data yet; get off ASAP once clicks/CTR exist | `targetSpend` |
+| Maximize Conversions | Have conversion tracking, below the tCPA gate | `maximizeConversions` |
+| Target CPA | **~30 conv/mo/campaign** (the tCPA gate — below it, Smart Bidding starves) | `targetCpa` (`targetCpaMicros`) |
+| Target ROAS / Max Conversion Value | **~60 days of value data AND ≥2 distinct conversion values** | `maximizeConversionValue` → `targetRoas` |
+| Maximize Clicks (brand only) | Brand campaign with strict max-bid caps | `targetSpend` |
+
+`targetRoas` is a raw multiplier (`4.0` = 400%), NOT micros; `targetCpaMicros` IS micros (1e6 = $1). The **campaign-operator now ENFORCES these gates at deploy time** — the buyer just plans the right rung within them. Full ladder + value-bidding doctrine: cross-ref `skills/google-ads/rules/smart-bidding.md`.
+
+**Bidding planning rules (cross-ref `skills/google-ads/rules/smart-bidding.md`):**
+- **Micro-conversion value ladder** for <10 deals/mo (high-ticket / enterprise): assign calculated values to upstream actions (signup → MQL → SQL → closed-won) so the campaign keeps conversion *density* to bid on while steering toward real revenue. Need ≥2 unique values before tROAS is stable.
+- **70-80% start rule:** set the initial tCPA/tROAS at 70-80% of trailing actual performance (looser than reality, so delivery stays open), then tighten toward the profitable floor in ~10% steps over successive 2-week holds.
+- **Phased budget:** do NOT dump the full budget at learning-phase start. Phase 1 (≤$10k) ~90% bottom-funnel Search to set baselines; Phase 2 ($10-30k) ~70% Search / 30% PMax + Customer Match; Phase 3 ($30k+) layer YouTube / Demand Gen at ~15-20% for demand creation.
+- **Bid to a bridge, then graduate:** for info products, start on a soft conversion (webinar reg), graduate the primary up the chain one rung at a time — don't make every soft conversion primary at once (teaches the engine to chase cheap clickers).
 
 ### Responsive Search Ad (RSA) Structure
 
@@ -277,6 +294,20 @@ Use both channels when:
 | $2,000-$5,000 | 60% Meta / 40% Google | Meta for prospecting, Google for intent capture |
 | $5,000-$10,000 | 50% Meta / 30% Google / 20% retargeting (cross-platform) | Full funnel coverage |
 | $10,000+ | 40% Meta / 30% Google / 15% retargeting / 15% experimental (YouTube, LinkedIn, etc.) | Diversified with testing budget |
+
+#### Google-Internal Five-Pillar Budget Matrix
+
+Distinct from the cross-channel table above: this splits the budget *inside* Google across the intent ladder once Google is chosen. Pillars never share budget (Atlas Part II). Each share is a separate campaign budget set as `amountMicros` (1e6 = $1; a 5% pillar of $20k/mo = $1,000/mo = 1000000000 micros).
+
+| Pillar | Share | Bidding & match |
+|--------|-------|-----------------|
+| Brand protection | 5-7% | Manual CPC, exact match |
+| High-intent Search | 50-60% | tCPA, phrase + broad |
+| Competitor conquest | 15-20% | tCPA, exact + phrase |
+| Problem-aware | 10-15% | Maximize Conversions, broad |
+| Remarketing / nurture | 10% | Maximize Conversions, audience lists |
+
+For NEW accounts, override this steady-state split with the phased budget (Search-first) until volume stabilizes. Full pillar doctrine + audit commands: cross-ref `skills/google-ads/rules/account-architecture.md`.
 
 **Budget reallocation rules:**
 - Review weekly. If one channel's CPA is 2x+ the other, shift 20% of its budget to the winning channel.

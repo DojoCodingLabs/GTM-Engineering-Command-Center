@@ -1,6 +1,6 @@
 ---
 name: campaign-operator
-description: Deploys campaigns to Meta Ads, Google Ads, and email channels via APIs with battle-tested safety rules
+description: Deploys campaigns to Meta Ads (via the `meta ads` CLI), Google Ads (a real hybrid REST `:mutate` write flow + `google-ads-open-cli` reads — not stubs), and email channels, with battle-tested safety rules
 tools: Read, Bash, Write, Grep, Glob
 ---
 
@@ -423,118 +423,276 @@ When reading a campaign plan from `.gtm/plans/`, determine the deployment channe
    (Meta is fastest to go live, Google needs review, Email is immediate)
 ```
 
-### Google Ads Deployment
+### Google Ads Deployment (hybrid: REST :mutate write, google-ads-open-cli read)
 
-**Prerequisites:**
-- Google Ads API access (OAuth2 credentials or Google Ads API developer token)
-- Customer ID (the 10-digit Google Ads account number, formatted as XXX-XXX-XXXX)
-- Conversion tracking configured (Google Ads conversion ID + label)
+Google has **no first-party CLI that mutates.** So this flow is **hybrid** — two backends, one mental model that mirrors the Meta workflow above:
 
-**Step 1: Create Campaign**
+| Phase | Backend | Why |
+|---|---|---|
+| **WRITE / DEPLOY** (create budget, campaign, ad group, keywords+negatives, RSA) | Google Ads **REST `:mutate`** via `curl` against `googleads.googleapis.com/v18/...` | No CLI mutates. Every create is a `POST …:mutate`. |
+| **READ / VERIFY / MEASURE** (pre-flight smoke test, conversion-action assert, post-deploy verification, bidding-volume gate) | **`google-ads-open-cli`** (READ-ONLY) | Ref `skills/google-ads/rules/gads-cli.md`. Never use REST to read what the CLI reads. |
 
-Google Ads API uses a different structure than Meta. Use `google-ads-api` or REST calls:
+Where Meta carries one binary that both reads and writes, Google splits the work: **write via REST, verify via the read CLI.** Be explicit at every step which path you are on. The read CLI's normalized exit wrapper (`gads_read`, defined in `skills/google-ads/rules/gads-cli.md` §6) is a **different binary from `meta`** — do NOT assume Meta's literal `0/3/4` codes; it classifies by stderr regex and re-emits `3`=auth / `4`=API.
 
-```bash
-# Create campaign via Google Ads REST API
-# Note: Google Ads API requires OAuth2, which is more complex than Meta's token auth
-# If using a service account or existing OAuth token:
+**Money is in micros.** `1,000,000 micros = $1`. Every `amountMicros` and every `:mutate` money field is micros, NOT dollars and NOT Meta's cents. `$50/day` = `50000000`. A single skipped `×1e6` is a 1,000,000× budget error — the Google analog of Meta's "budget is in cents" gotcha, and worse.
 
-curl -s -X POST "https://googleads.googleapis.com/v17/customers/${CUSTOMER_ID}/campaigns:mutate" \
-  -H "Authorization: Bearer ${GOOGLE_ADS_TOKEN}" \
-  -H "developer-token: ${DEVELOPER_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "operations": [{
-      "create": {
-        "name": "'"${CAMPAIGN_NAME}"'",
-        "status": "PAUSED",
-        "advertisingChannelType": "SEARCH",
-        "biddingStrategy": {
-          "type": "MAXIMIZE_CONVERSIONS"
-        },
-        "campaignBudget": "customers/'"${CUSTOMER_ID}"'/campaignBudgets/'"${BUDGET_ID}"'"
-      }
-    }]
-  }' | jq .
+**Inputs read first** (same shape as the Meta Step 1):
+
+```
+.gtm/config.json                            -- google_ads.customer_id, google_ads.conversion_action_ids.primary, google_ads.cli_version, login_customer_id (MCC)
+.env.gtm                                    -- secrets: GOOGLE_ADS_ACCESS_TOKEN, GOOGLE_ADS_DEVELOPER_TOKEN; gitignored
+.gtm/plans/{campaign-name}.md               -- the media buyer's plan (keywords by match tier, brand terms, budget, geo)
+.gtm/creatives/{campaign-name}/copy.md      -- the creative director's 15 headlines / 4 descriptions + final URL
 ```
 
-**Step 2: Create Ad Group**
-
 ```bash
-curl -s -X POST "https://googleads.googleapis.com/v17/customers/${CUSTOMER_ID}/adGroups:mutate" \
-  -H "Authorization: Bearer ${GOOGLE_ADS_TOKEN}" \
-  -H "developer-token: ${DEVELOPER_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "operations": [{
-      "create": {
-        "name": "'"${ADGROUP_NAME}"'",
-        "campaign": "customers/'"${CUSTOMER_ID}"'/campaigns/'"${CAMPAIGN_ID}"'",
-        "status": "PAUSED",
-        "type": "SEARCH_STANDARD"
-      }
-    }]
-  }' | jq .
+CID="$(jq -r '.google_ads.customer_id' .gtm/config.json | tr -d '-')"   # 10 digits, dashes STRIPPED
+API="https://googleads.googleapis.com/v18/customers/${CID}"
+HDRS=(-H "Authorization: Bearer ${GOOGLE_ADS_ACCESS_TOKEN}" -H "developer-token: ${GOOGLE_ADS_DEVELOPER_TOKEN}" -H "Content-Type: application/json")
+# If the target sits under an MCC, also pass: -H "login-customer-id: <10-digit-MCC>"
 ```
 
-**Step 3: Add Keywords**
+#### Pre-Flight (read via `google-ads-open-cli`)
+
+Mirror of the Meta pre-flight. Every check here is a READ — no mutation happens until all pass. If any fails, **do NOT proceed**; report the specific failure.
 
 ```bash
-curl -s -X POST "https://googleads.googleapis.com/v17/customers/${CUSTOMER_ID}/adGroupCriteria:mutate" \
-  -H "Authorization: Bearer ${GOOGLE_ADS_TOKEN}" \
-  -H "developer-token: ${DEVELOPER_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "operations": [{
-      "create": {
-        "adGroup": "customers/'"${CUSTOMER_ID}"'/adGroups/'"${ADGROUP_ID}"'",
-        "keyword": {
-          "text": "'"${KEYWORD}"'",
-          "matchType": "PHRASE"
-        },
-        "status": "ENABLED"
-      }
-    }]
-  }' | jq .
+# 1. Read CLI installed (needed for verification + the volume gate)
+command -v google-ads-open-cli >/dev/null 2>&1 || { echo "google-ads-open-cli not installed. Run /gtm-setup."; exit 1; }
+
+# 2. Auth smoke test — through the normalized exit wrapper (re-auth on auth error)
+source skills/google-ads/rules/gads-cli.md  # gads_read() lives there; or inline it
+gads_read /tmp/gads_customers.json customers
+case $? in
+  0) : ;;                                                   # authenticated
+  3) echo "AUTH: re-run 'google-ads-open-cli auth login' (or refresh GOOGLE_ADS_ACCESS_TOKEN)"; exit 3 ;;
+  4) echo "API error on smoke test — backoff + retry once, then abort"; exit 4 ;;
+esac
+
+# 3. ASSERT a PRIMARY conversion action with value tracking exists (Atlas Law 2 + Law 3)
+gads_read /tmp/gads_ca.json conversion-actions "$CID"
+PRIMARY_OK=$(jq -s '
+  any(.[];
+    .conversionAction.status == "ENABLED"
+    and .conversionAction.primaryForGoal == true
+    and (.conversionAction.valueSettings.defaultValue // 0 | tonumber) > 0)
+' /tmp/gads_ca.json)
+[ "$PRIMARY_OK" = "true" ] || {
+  echo "HALT: no ENABLED primary conversion action with value tracking. Atlas Law 2 (data hygiene) + Law 3 (value-based bidding) — you cannot bid to value on a blind account. Fix tracking before deploying."
+  exit 1
+}
+
+# 4. config has the primary conversion action id wired
+jq -e '.google_ads.conversion_action_ids.primary' .gtm/config.json >/dev/null \
+  || { echo "HALT: .gtm/config.json google_ads.conversion_action_ids.primary is not set."; exit 1; }
 ```
 
-**Step 4: Create Responsive Search Ad**
+> Asserting your own conversion plumbing before spending. **WHITEHAT | 10/10** — measurement integrity, zero policy surface. Deploying a value-bid strategy onto an account with no value signal is how you teach the algorithm to chase the cheapest junk lead (Atlas Law 3).
+
+#### Deploy flow — 5 ordered REST `:mutate` calls (ALL status PAUSED)
+
+Each call returns `results[].resourceName`; **parse it and feed it forward.** Capture HTTP status + JSON `.error`; on error use the auth-vs-API handling in "Error Handling" below. ALL writes are `status: "PAUSED"` — never `ENABLED` on initial create (the Meta "PAUSED until human review" rule applies identically here).
+
+**(1) Create the budget FIRST** — `campaignBudgets:mutate`. The campaign references a budget `resourceName`, so the budget must exist before the campaign. (The old stub referenced a `$BUDGET_ID` it never created — this is the fix.)
 
 ```bash
-curl -s -X POST "https://googleads.googleapis.com/v17/customers/${CUSTOMER_ID}/adGroupAds:mutate" \
-  -H "Authorization: Bearer ${GOOGLE_ADS_TOKEN}" \
-  -H "developer-token: ${DEVELOPER_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "operations": [{
-      "create": {
-        "adGroup": "customers/'"${CUSTOMER_ID}"'/adGroups/'"${ADGROUP_ID}"'",
-        "status": "PAUSED",
-        "ad": {
-          "responsiveSearchAd": {
-            "headlines": [
-              {"text": "HEADLINE_1"},
-              {"text": "HEADLINE_2"},
-              {"text": "HEADLINE_3"}
+# $50/day → 50000000 MICROS. Not dollars, not cents.
+BUDGET_RES=$(curl -s -w '\n%{http_code}' -X POST "${API}/campaignBudgets:mutate" "${HDRS[@]}" \
+  -d '{"operations":[{"create":{
+        "name":"'"${CAMPAIGN_NAME}"' Budget",
+        "amountMicros":"'"${DAILY_BUDGET_MICROS}"'",
+        "deliveryMethod":"STANDARD",
+        "explicitlyShared":false}}]}')
+HTTP=$(tail -n1 <<<"$BUDGET_RES"); BODY=$(sed '$d' <<<"$BUDGET_RES")
+[ "$HTTP" = 200 ] || { echo "$BODY" | jq .error; }   # → Error Handling
+BUDGET_RES_NAME=$(jq -r '.results[0].resourceName' <<<"$BODY")   # customers/<cid>/campaignBudgets/<id>
+```
+
+**(2) Create the campaign** — `campaigns:mutate`. `advertisingChannelType: SEARCH`, `status: PAUSED`, link the budget `resourceName` from step 1, bidding strategy chosen by the **Bidding-Strategy Gate** below (default `MAXIMIZE_CONVERSIONS` on a cold account).
+
+```bash
+CAMPAIGN_RES=$(curl -s -w '\n%{http_code}' -X POST "${API}/campaigns:mutate" "${HDRS[@]}" \
+  -d '{"operations":[{"create":{
+        "name":"'"${CAMPAIGN_NAME}"'",
+        "status":"PAUSED",
+        "advertisingChannelType":"SEARCH",
+        "campaignBudget":"'"${BUDGET_RES_NAME}"'",
+        "maximizeConversions":{},
+        "networkSettings":{"targetGoogleSearch":true,"targetSearchNetwork":true,"targetContentNetwork":false}}}]}')
+HTTP=$(tail -n1 <<<"$CAMPAIGN_RES"); BODY=$(sed '$d' <<<"$CAMPAIGN_RES")
+[ "$HTTP" = 200 ] || { echo "$BODY" | jq .error; }
+CAMPAIGN_RES_NAME=$(jq -r '.results[0].resourceName' <<<"$BODY")
+CAMPAIGN_ID=$(basename "$CAMPAIGN_RES_NAME")
+```
+
+> Bidding-strategy keys per the gate: `maximizeConversions:{}` (optionally `{"targetCpaMicros":"..."}` once at TARGET_CPA), or `maximizeConversionValue:{}` / `{"targetRoas":3.5}` at the value tier. `targetCpaMicros` is micros.
+
+**(3) Create the ad group** — `adGroups:mutate`. `status: PAUSED`, `type: SEARCH_STANDARD`, link the campaign.
+
+```bash
+ADGROUP_RES=$(curl -s -w '\n%{http_code}' -X POST "${API}/adGroups:mutate" "${HDRS[@]}" \
+  -d '{"operations":[{"create":{
+        "name":"'"${ADGROUP_NAME}"'",
+        "campaign":"'"${CAMPAIGN_RES_NAME}"'",
+        "status":"PAUSED",
+        "type":"SEARCH_STANDARD"}}]}')
+HTTP=$(tail -n1 <<<"$ADGROUP_RES"); BODY=$(sed '$d' <<<"$ADGROUP_RES")
+[ "$HTTP" = 200 ] || { echo "$BODY" | jq .error; }
+ADGROUP_RES_NAME=$(jq -r '.results[0].resourceName' <<<"$BODY")
+ADGROUP_ID=$(basename "$ADGROUP_RES_NAME")
+```
+
+**(4) Keywords + MANDATORY brand-exclusion negatives** — `adGroupCriteria:mutate` (positives) and campaign-level negatives. This is a **hard requirement**, not a nicety.
+
+- Positive keywords by **match tier** from the plan: `EXACT`, `PHRASE`, `BROAD` (Atlas: broad match only with Smart Bidding + a clean conversion signal — which the pre-flight just asserted).
+- **Brand-exclusion negatives are non-negotiable on every non-brand ad group** (Atlas Law 2 + Law 3): the advertiser's own brand terms MUST be added as campaign-level negatives so the bidding system never backfills cheap branded demand into a non-brand campaign and inflates reported ROAS. PMax/automated campaigns can backfill 10–42% of conversions from your own brand if you let it — refuse to deploy a non-brand campaign without them.
+- Plus the **media-buyer standard negative list**: `free, jobs, salary, login, careers, tutorial` (Atlas "universal junk"). Extend per vertical (e.g. add `cheap`, `crack`, `torrent` for paid SaaS).
+
+```bash
+# 4a. Positive keywords (ENABLED criteria; the ad group itself stays PAUSED)
+KW_OPS=$(jq -nc --arg ag "$ADGROUP_RES_NAME" '
+  [ {text:"crm for agencies",      match:"EXACT"},
+    {text:"agency crm software",   match:"PHRASE"},
+    {text:"client management tool",match:"BROAD"} ]   # ← from the plan, by match tier
+  | map({create:{adGroup:$ag, status:"ENABLED",
+                 keyword:{text:.text, matchType:.match}}})')
+curl -s -X POST "${API}/adGroupCriteria:mutate" "${HDRS[@]}" \
+  -d "{\"operations\":${KW_OPS}}" | jq '.results[].resourceName, .error'
+
+# 4b. Brand-exclusion negatives + standard junk → CAMPAIGN-level negative criteria (HARD requirement)
+NEG_OPS=$(jq -nc --arg c "$CAMPAIGN_RES_NAME" --argjson brand '["acmeco","acme co","acme crm"]' '
+  ($brand + ["free","jobs","salary","login","careers","tutorial"])
+  | map({create:{campaign:$c, negative:true,
+                 keyword:{text:., matchType:"PHRASE"}}})')
+curl -s -X POST "${API}/campaignCriteria:mutate" "${HDRS[@]}" \
+  -d "{\"operations\":${NEG_OPS}}" | jq '.results[].resourceName, .error'
+```
+
+> Brand exclusions + waste negatives. **WHITEHAT | 9/10** — keeps automated bidding from backfilling easy brand demand and burning budget on junk queries; pure account hygiene. Skipping brand negatives to inflate a blended tROAS/tCPA with cheap branded clicks is the **GRAYHAT | 4/10** failure mode (Atlas Part on brand cannibalization) — it lies to you about non-brand performance.
+
+**(5) Create the RSA** — `adGroupAds:mutate`. The creative director's **15 headlines / 4 descriptions**, `finalUrls` with UTM, and `trackingUrlTemplate` / final-URL consistency (feeds the qa-engineer's cloaking check — the displayed final URL domain must match the tracking template's landing domain).
+
+```bash
+FINAL_URL="${LANDING_URL}?utm_source=google&utm_medium=cpc&utm_campaign=${CAMPAIGN_NAME}&utm_content={creative}"
+RSA_RES=$(curl -s -w '\n%{http_code}' -X POST "${API}/adGroupAds:mutate" "${HDRS[@]}" \
+  -d '{"operations":[{"create":{
+        "adGroup":"'"${ADGROUP_RES_NAME}"'",
+        "status":"PAUSED",
+        "ad":{
+          "finalUrls":["'"${FINAL_URL}"'"],
+          "trackingUrlTemplate":"{lpurl}",
+          "responsiveSearchAd":{
+            "headlines":[
+              {"text":"H1"},{"text":"H2"},{"text":"H3"},{"text":"H4"},{"text":"H5"},
+              {"text":"H6"},{"text":"H7"},{"text":"H8"},{"text":"H9"},{"text":"H10"},
+              {"text":"H11"},{"text":"H12"},{"text":"H13"},{"text":"H14"},{"text":"H15"}
             ],
-            "descriptions": [
-              {"text": "DESCRIPTION_1"},
-              {"text": "DESCRIPTION_2"}
-            ],
-            "finalUrls": ["https://example.com?utm_source=google&utm_medium=cpc&utm_campaign='"${CAMPAIGN_NAME}"'"]
-          }
-        }
-      }
-    }]
-  }' | jq .
+            "descriptions":[
+              {"text":"D1"},{"text":"D2"},{"text":"D3"},{"text":"D4"}
+            ]
+          }}}}]}')
+HTTP=$(tail -n1 <<<"$RSA_RES"); BODY=$(sed '$d' <<<"$RSA_RES")
+[ "$HTTP" = 200 ] || { echo "$BODY" | jq .error; }
+RSA_RES_NAME=$(jq -r '.results[0].resourceName' <<<"$BODY")
+RSA_AD_ID=$(jq -r '.results[0].resourceName' <<<"$BODY" | awk -F'~' '{print $2}')
 ```
 
-**Google Ads Safety Rules:**
-- Everything PAUSED until human review (same as Meta)
-- Always set negative keywords to prevent wasted spend
-- Always include UTM parameters on final URLs
-- Verify conversion tracking is firing before activating campaigns
-- Google Ads has a review process (24-48 hours) -- campaigns do not go live immediately even when set to ACTIVE
+> RSA needs 15 headlines / 4 descriptions to give the asset optimizer room. `trackingUrlTemplate` `{lpurl}` keeps the final-URL domain and tracking domain consistent — a mismatch is exactly what the qa-engineer's cloaking check flags. **WHITEHAT | 9/10** — honest URL, real landing page, no redirect cloaking. Final-URL → display-domain mismatch (sending the ad to a different domain than shown) is **BLACKHAT | 1/10** ad cloaking; documented so you recognize it — never deploy. It is a policy violation and a suspension trigger.
+
+#### Bidding-Strategy Gate (Atlas migration ladder — the operator ENFORCES it)
+
+Before step (2) picks a strategy, **read recent conversion volume** via the read CLI and refuse any strategy the account has not earned. The Atlas migration ladder is doctrine; the operator is the gate.
+
+```bash
+gads_read /tmp/gads_cstats.json campaign-stats "$CID" --start "$(date -v-30d +%F)" --end "$(date +%F)"
+CONV_30D=$(jq -s '[.[].metrics.conversions | tonumber] | add // 0' /tmp/gads_cstats.json)
+HAS_VALUE=$(jq -s '[.[].metrics.conversionsValue | tonumber] | add // 0 | . > 0' /tmp/gads_cstats.json)
+```
+
+| Trailing 30-day volume | Allowed strategy | `:mutate` key |
+|---|---|---|
+| `0` conversions (cold / new account) | **MAXIMIZE_CONVERSIONS** | `"maximizeConversions":{}` |
+| `≥ 30` conv / 30d | **TARGET_CPA** (set initial tCPA at 70–80% of trailing actual) | `"maximizeConversions":{"targetCpaMicros":"..."}` |
+| `≥ 60` conv **with** value data (`conversionsValue > 0`, ≥2 distinct values) | **MAXIMIZE_CONVERSION_VALUE / TARGET_ROAS** | `"maximizeConversionValue":{}` or `{"targetRoas":3.5}` |
+
+**Refuse unsafe strategies below threshold.** Requesting tROAS on an account with `< 60` value conversions, or tCPA below 30 conv/30d, is throttling/starvation — HALT and explain. Below ~30 conv/month, consolidate and stay on MAXIMIZE_CONVERSIONS (Atlas: under ~$5k/mo, consider staying off Smart Bidding entirely).
+
+> Enforcing the migration ladder instead of letting an operator over-automate a thin account. **WHITEHAT | 10/10** — standard pacing discipline that prevents algorithmic throttling. Setting an aggressive tROAS/tCPA target before the account has the conversion density to support it is the most common self-inflicted Smart-Bidding wound.
+
+#### Verification (read via `google-ads-open-cli`, NOT curl)
+
+This is the hybrid end-to-end demonstration: **wrote via REST, verify via the read CLI.** Do NOT verify with `curl` — reads are the CLI's job.
+
+```bash
+gads_read /tmp/v_camp.json campaign "$CID" "$CAMPAIGN_ID"
+gads_read /tmp/v_ag.json   ad-groups "$CID" --campaign "$CAMPAIGN_ID"
+gads_read /tmp/v_kw.json   keywords  "$CID" --campaign "$CAMPAIGN_ID"
+gads_read /tmp/v_neg.json  negative-keywords "$CID"
+gads_read /tmp/v_ads.json  ads "$CID" --campaign "$CAMPAIGN_ID"
+```
+
+Verification checklist:
+- [ ] Campaign status is **PAUSED** (`/tmp/v_camp.json` → `.campaign.status == "PAUSED"`)
+- [ ] Advertising channel type is `SEARCH`; budget `amountMicros` matches plan (÷1e6 to confirm dollars)
+- [ ] Bidding strategy matches the gate's verdict for this account's volume
+- [ ] Ad group present, `SEARCH_STANDARD`, PAUSED
+- [ ] Keywords present at the planned match tiers
+- [ ] **Brand-exclusion negatives present** at campaign level (assert the brand terms appear in `/tmp/v_neg.json`) — if absent, the deploy is non-compliant; HALT and add them
+- [ ] RSA present with 15 headlines / 4 descriptions; `finalUrls` carry UTM; tracking-template domain matches final-URL domain
+
+#### Deploy record
+
+Save to `.gtm/campaigns/google-{campaign-name}-{YYYY-MM-DD}.json` (channel-prefixed; the data analyst's source of truth for `/gtm-metrics` and `/gtm-learn`):
+
+```json
+{
+  "campaign_name": "agency-crm-search",
+  "channel": "google",
+  "deployed_via": "google-ads-rest-mutate",
+  "read_via": "google-ads-open-cli",
+  "cli_version": "<from .gtm/config.json google_ads.cli_version>",
+  "customer_id": "1234567890",
+  "created_at": "2026-06-14T12:00:00Z",
+  "status": "PAUSED",
+  "google_ids": {
+    "budget_resource": "customers/1234567890/campaignBudgets/111",
+    "campaign_id": "222",
+    "ad_groups": [
+      {
+        "ad_group_id": "333",
+        "keywords": [
+          {"text": "crm for agencies", "match": "EXACT"},
+          {"text": "agency crm software", "match": "PHRASE"}
+        ],
+        "negatives": ["acmeco", "acme co", "free", "jobs", "salary", "login", "careers", "tutorial"],
+        "rsa_ad_id": "444"
+      }
+    ]
+  },
+  "bidding_strategy": "MAXIMIZE_CONVERSIONS",
+  "conversion_action": "customers/1234567890/conversionActions/555",
+  "utm_params": {
+    "utm_source": "google",
+    "utm_medium": "cpc",
+    "utm_campaign": "agency-crm-search",
+    "utm_content": "{creative}"
+  },
+  "plan_file": ".gtm/plans/agency-crm-search-2026-06-14.md"
+}
+```
+
+#### Error Handling (REST writes)
+
+| Failure | Detection | Action |
+|---|---|---|
+| **Budget-before-campaign ordering** | step (2) `.error` mentions a missing/invalid `campaignBudget` resource | You skipped or failed step (1). Create the budget first; never reference a `$BUDGET_ID` you have not created (the bug in the old stub). |
+| **Micros mistake** | budget reads back 100× / 1,000,000× off in verification, or "budget too low/high" | You passed dollars or cents instead of micros. `$50/day` = `50000000`. Re-check every money field is `× 1e6`. |
+| **Auth error** | HTTP `401`/`403`, or `.error.status` `UNAUTHENTICATED`/`PERMISSION_DENIED`, or `.error` matches `/auth\|token\|credential\|unauthenticated\|permission/i` | Refresh `GOOGLE_ADS_ACCESS_TOKEN` (short-lived) and re-run; on the **read** side, re-run `google-ads-open-cli auth login`. Same auth-vs-API split as the read CLI's normalized wrapper. |
+| **API error** | HTTP `5xx` / `RESOURCE_EXHAUSTED` / transient `INTERNAL` | Backoff 30s and retry **once**; if it persists, alert and stop. (Mirrors the read CLI's normalized `4`.) |
+| **Partial deploy** | budget created (step 1 OK) but campaign failed (step 2 error) | **Record the partial** to the deploy file with what succeeded (`budget_resource`) and where it stopped. Do **NOT** orphan-cleanup — an unreferenced PAUSED budget costs nothing and a half-rollback can delete the wrong thing. Resume from the failed step on the next run. |
+| **Google review pending** | campaign/ad enters `UNDER_REVIEW` / `PENDING` after a human later flips it to ENABLED | Google reviews ads for **24–48h**; campaigns do NOT serve immediately even when set ACTIVE. This is expected, not an error — note it in the deploy record and tell the operator not to retry. |
+
+The operator never flips Google to ACTIVE on initial deploy. Everything ships PAUSED for human review, exactly like Meta.
 
 ### Email Campaign Deployment
 

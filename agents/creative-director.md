@@ -303,3 +303,129 @@ Framework: {PAS / AIDA / Before-After-Bridge / Irresistible Offer}
 ## Rationale
 {Why this angle, framework, and messaging will work for this audience}
 ```
+
+## Google Ads Creative (RSA + YouTube)
+
+Google is a DIFFERENT channel from Meta. Search is TEXT-ONLY; the assembly engine (RSA) tests headline/description combinations the way Meta DCO tests image+copy. PMax, Demand Gen, and YouTube need images and video. Everything below distills the Atlas (Part VIII creative construction, Part IX browse surfaces). Reference the channel skill `skills/google-ads/rules/gads-cli.md` for the read CLI surface and the REST `:mutate` path for deploys. Money is in MICROS everywhere (1,000,000 micros = $1) — irrelevant to copy, but it bites the second you touch a budget. All campaign writes default to status PAUSED.
+
+### RSA Matrix
+
+The Google analog of the Meta 5x5x5 DCO block is **15 headlines + 4 descriptions**. The assembly engine builds and tests combinations per query — your job is to feed it genuinely distinct angles, not 15 rewrites of one line. Bucket the 15 headlines core / pain / authority (5 each), per Atlas Part VIII.
+
+**Headlines — 30 chars MAX each:**
+
+| # | Bucket | Angle | Example (≤30 chars) |
+|---|--------|-------|----------------------|
+| H1 | Core benefit | Lead outcome | `Ship 3x Faster` |
+| H2 | Core benefit | Core value | `Deploy in One Command` |
+| H3 | Core benefit | Speed/result | `Build Apps in Minutes` |
+| H4 | Core benefit | Outcome + scope | `From Idea to Live Fast` |
+| H5 | Core benefit | Plain promise | `Your Code, Production Ready` |
+| H6 | Pain / problem-aware | Name the pain | `Tired of Broken Builds?` |
+| H7 | Pain / problem-aware | Friction callout | `Stop Fighting Your CI` |
+| H8 | Pain / problem-aware | Cost of inaction | `Stop Shipping Bugs` |
+| H9 | Pain / problem-aware | Status quo jab | `Done With Slow Deploys?` |
+| H10 | Pain / problem-aware | Risk reversal | `No More 2am Rollbacks` |
+| H11 | Authority / social proof | Number proof | `12,000+ Devs Trust Us` |
+| H12 | Authority / social proof | Logo/scale | `Used at 500+ Teams` |
+| H13 | Authority / social proof | Rating | `Rated 4.9 by Engineers` |
+| H14 | Authority / social proof | Guarantee | `Free Forever Plan` |
+| H15 | Authority / social proof | Risk reversal | `No Credit Card Needed` |
+
+**Descriptions — 90 chars MAX each, ≥2 must carry a CTA:**
+
+| # | Pairing | Example (≤90 chars) |
+|---|---------|----------------------|
+| D1 | Detailed benefit | `Ship production apps without managing infra. One command, zero YAML, fully typed.` |
+| D2 | Benefit + urgency CTA | `Join 12,000 devs shipping faster. Start free in 60 seconds — no credit card.` |
+| D3 | Proof + risk reversal CTA | `Rated 4.9 by engineers. Try every feature free, cancel anytime. Start building now.` |
+| D4 | Feature specificity | `Typed SDK, instant rollbacks, and preview deploys on every push. Built for teams.` |
+
+**Pinning discipline:** pin ONLY when legally or contractually required — typically a brand name to H1 or a mandated compliance line. Over-pinning kills Google's combination testing: a pinned position is locked out of rotation and the engine can no longer learn which angle wins. Leave all 15 headlines and 4 descriptions UNPINNED by default. Ad Strength is a weak signal — do not sacrifice strong copy to chase an "Excellent" rating (Atlas Part VIII). Use asset-level reporting via the read CLI (`google-ads-open-cli ads <id> --ad-group <agid>`, then `query` for asset performance) to prune losers; deploy edits through the REST `:mutate` path.
+
+**WHITEHAT | 10/10** — Multi-angle RSA testing is standard practice inside Google's native creative framework (Atlas Part VIII).
+
+### Character-Limit Table
+
+DIFFERENT from Meta. Do NOT reuse Meta's limits on a Google asset, or the `:mutate` call rejects the asset.
+
+| Asset | Google Ads (RSA) | Meta (for contrast) |
+|-------|------------------|----------------------|
+| Headline | **30 chars** | 40 chars |
+| Description | **90 chars** | 125 chars (primary text) |
+| Path / display URL field | **15 chars** (×2 path fields) | 30 chars (description) |
+
+If you author a 40-char headline (Meta-legal) it is INVALID on Google — it will be truncated or rejected at mutate time. Count every Google headline at 30, every description at 90, every path segment at 15. When in doubt, write short.
+
+### Text Ads Have No Aspect Ratio
+
+Search RSAs are **TEXT-ONLY**. The mandatory Meta rule "always generate 1:1 AND 9:16" does NOT apply to Search — there is no image, no aspect ratio, no scroll-stop visual. Do not burn image-generation calls (Gemini, Nano Banana) producing pictures for a Search RSA; they have nowhere to go.
+
+BUT the visual channels DO need assets and DO follow aspect-ratio rules:
+
+| Channel | Needs images? | Required image sizes | Needs video? |
+|---------|---------------|----------------------|--------------|
+| Search (RSA) | NO | — | NO |
+| Performance Max | YES | 1200×628 (1.91:1 landscape), 1200×1200 (1:1 square), 960×1200 (4:5 portrait) | Yes (text-only PMax underperforms — Atlas Part III: video is "the closest thing to a PMax magic button") |
+| Demand Gen | YES | 1200×628, 1200×1200, 960×1200 | Yes (treat like paid social — Atlas Part IX) |
+| YouTube | — | Companion banner optional | YES (video is the ad) |
+
+For PMax/Demand Gen/YouTube asset groups, reuse the existing Gemini image pipeline (Step 4) and the multi-image logo-compositing workflow — generate the three sizes above, not the Meta 1:1/9:16 pair. Asset uploads and asset-group writes go through the REST `:mutate` endpoints (no first-party CLI mutates); read back what landed with `google-ads-open-cli assets <id> --type IMAGE`.
+
+### YouTube Hybrid AI-Hook Structure
+
+For Video and Demand Gen, fully-AI ads underperform — AI captures attention but does not build trust (Atlas Part VIII, Aleric Heck: 6 of his top 10 YouTube ads use a hybrid structure; fully-AI ads were his worst). The opening hook functions less as copywriting and more as an **audience-selection filter**: who stays past the hook teaches Google what a good viewer looks like. Target 2–3 minute runtime on a hook → value → CTA spine.
+
+Hybrid structure:
+
+| Beat | Time | Source | Job |
+|------|------|--------|-----|
+| Pattern-interrupt hook | 0–3s | **AI-generated** (Nano Banana Pro 3D/claymation, surreal visual, or one of the 6 Hook Categories rendered as motion) | Stop the scroll, filter the audience |
+| Cut to a real person | 3–10s | Real human (AI-UGC pipeline: Arcads / Creatify / VidAU synthetic actor, or genuine creator) | Establish trust the AI hook cannot |
+| Problem | 10–40s | Real person | Name the pain (reuse Hook Category 1: "Still dealing with [pain]?") |
+| Product | 40–90s | Real person + screen capture | Show the mechanism, real capability only |
+| Proof | 90–140s | Testimonial / numbers / demo | Social proof (Hook Category 3: "Join [number]+ who…") |
+| CTA | 140–180s | Direct offer (Hook Category 4) | One clear action; lower-friction offer for cold browse |
+
+Reuse the 6 Hook Categories and the AI-UGC pipeline already defined above — the only Google-specific change is the AI/real **handoff** at ~3s. For conversion campaigns, recommend turning off connected-TV screens (Atlas Part VIII).
+
+**WHITEHAT | 9/10** — Hybrid AI-hook-into-real-person structure is creative-led audience selection within native YouTube/Demand Gen mechanics; builds trust while exploiting AI's attention edge.
+
+**GRAYHAT | 8/10** — Simulated interface/product animations (a fake-but-slick UI walkthrough in the hook) are allowed ONLY if they reflect real product capability. The moment the animation shows something the product cannot do, it becomes a deceptive claim and invites disapproval. Keep every simulated frame truthful.
+
+### Output Format
+
+For Google, emit an RSA block ALONGSIDE the Meta block above — never instead of it; the two channels ship different asset shapes.
+
+```markdown
+# Google RSA: {Angle Name}
+Framework: {PAS / AIDA / Before-After-Bridge / Irresistible Offer}
+Channel: Search (RSA)
+
+## Headlines (15, ≤30 chars each)
+Core benefit:
+1. {≤30}  2. {≤30}  3. {≤30}  4. {≤30}  5. {≤30}
+Pain / problem-aware:
+6. {≤30}  7. {≤30}  8. {≤30}  9. {≤30}  10. {≤30}
+Authority / social proof:
+11. {≤30}  12. {≤30}  13. {≤30}  14. {≤30}  15. {≤30}
+
+## Descriptions (4, ≤90 chars each, ≥2 with CTA)
+1. {≤90}
+2. {≤90 + CTA}
+3. {≤90 + CTA}
+4. {≤90}
+
+## Paths (display URL, ≤15 chars each)
+Path 1: {≤15}
+Path 2: {≤15}
+
+## Pins
+{none — default}  OR  {H1 pinned: brand name (legal requirement)}
+
+## Final URL
+https://{domain}/{path}?utm_source=google&utm_medium=cpc&utm_campaign={campaign}&utm_content={angle}&utm_term={keyword_or_dynamic}
+
+## Deploy note
+Read/verify assets via `google-ads-open-cli`; CREATE/UPDATE the RSA via REST `:mutate` (status PAUSED). See skills/google-ads/rules/gads-cli.md.
+```
