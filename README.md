@@ -1,29 +1,24 @@
 <p align="center">
-  <img src="assets/banner.jpg" alt="GTM Command Center — Autonomous Growth Engine" width="100%">
+  <a href="https://dojocoding.io">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="docs/assets/banner-light.svg">
+      <img alt="GTM Engineering Command Center by Dojo Coding: Ads, email and SEO in one growth loop" src="docs/assets/banner-light.svg" width="100%">
+    </picture>
+  </a>
 </p>
 
-<h1 align="center">GTM Engineering Command Center</h1>
+# GTM Engineering Command Center
 
-<p align="center">
-  <strong>The autonomous growth operating system for Claude Code.</strong><br>
-  Multichannel orchestration. Andromeda-native. Neural pre-testing. Self-learning.<br>
-  One north star: <em>print cash.</em>
-</p>
+**A Claude Code plugin that plans, creates, deploys and measures your campaigns across ads, email and SEO, for builders who run their own growth.**
 
-<p align="center">
-  <a href="#installation"><img src="https://img.shields.io/badge/Claude_Code-Plugin-7C3AED?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6IiBmaWxsPSJ3aGl0ZSIvPjwvc3ZnPg==&logoColor=white" alt="Claude Code Plugin"></a>
-  <img src="https://img.shields.io/badge/version-1.8.0-C980FC?style=for-the-badge" alt="Version 1.8.0">
-  <img src="https://img.shields.io/badge/license-MIT-FF7151?style=for-the-badge" alt="MIT License">
-  <img src="https://img.shields.io/badge/channels-7-07070E?style=for-the-badge" alt="7 Channels">
-</p>
+**The autonomous growth operating system for Claude Code.**<br>
+Multichannel orchestration. Andromeda-native. Neural pre-testing. Self-learning.<br>
+One north star: *print cash.*
 
-<p align="center">
-  <a href="#slash-commands">28 Commands</a> •
-  <a href="#agents">15 Agents</a> •
-  <a href="#skills">16 Skills</a> •
-  <a href="#routines">4 Cloud Routines</a> •
-  <a href="#knowledge-base">3 Knowledge Bases</a>
-</p>
+[![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-Plugin-201E3D?labelColor=201E3D)](#installation) ![Version 1.14.0](https://img.shields.io/badge/version-1.14.0-FF7151?labelColor=201E3D) [![MIT License](https://img.shields.io/badge/license-MIT-FF7151?labelColor=201E3D)](LICENSE) ![7 Channels](https://img.shields.io/badge/channels-7-FF7151?labelColor=201E3D)
+
+[Get started](#installation) · [Commands](#slash-commands) · [Agents](#agents) · [Contribute](#contributing) · [Report an issue](https://github.com/DojoCodingLabs/GTM-Engineering-Command-Center/issues/new)
 
 ---
 
@@ -475,8 +470,8 @@ git clone https://github.com/DojoCodingLabs/GTM-Engineering-Command-Center.git
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+MIT — see [LICENSE](./LICENSE). Built by [Dojo Coding](https://dojocoding.io).
 
 <p align="center">
-  Built by <a href="https://dojocoding.com">Dojo Coding Labs</a>
+  <a href="https://dojocoding.io"><img src="docs/assets/dojocoding-mark.png" alt="Dojo Coding" width="48"></a>
 </p>

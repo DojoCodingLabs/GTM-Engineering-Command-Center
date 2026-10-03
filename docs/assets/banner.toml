@@ -1,0 +1,12 @@
+name = "GTM Engineering Command Center"
+tagline = "Ads, email and SEO in one [growth loop]"
+chips = ["30 commands / 16 agents"]
+meta = "Open source · Claude Code"
+tile = "/"
+
+[card]
+kind = "terminal"
+label = "Claude Code"
+status = "v1.14.0 · MIT"
+lines = [["/gtm-setup", "# detect your stack"], ["/gtm-quickstart", "# 7-day playbook"], ["/gtm", "# full lifecycle"]]
+dim = "plan → create → deploy → learn"
